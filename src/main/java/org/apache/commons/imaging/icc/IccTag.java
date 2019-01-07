@@ -14,6 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ *************************************************
+ * This source file has been modified by Objectif Lune Inc. 2018.
+ * New function(s) added:
+ *   getData()
+ *************************************************
+ */
 package org.apache.commons.imaging.icc;
 
 import java.io.ByteArrayInputStream;
@@ -44,6 +52,10 @@ public class IccTag {
         this.offset = offset;
         this.length = length;
         this.fIccTagType = fIccTagType;
+    }
+
+    public byte[] getData() {
+        return data;
     }
 
     public void setData(final byte[] bytes) throws IOException {
