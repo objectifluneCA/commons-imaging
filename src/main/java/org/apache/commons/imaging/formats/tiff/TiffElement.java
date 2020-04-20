@@ -21,16 +21,13 @@ import java.util.Comparator;
 public abstract class TiffElement {
     public final long offset;
     public final int length;
-    public static final Comparator<TiffElement> COMPARATOR = new Comparator<TiffElement>() {
-        @Override
-        public int compare(final TiffElement e1, final TiffElement e2) {
-            if (e1.offset < e2.offset) {
-                return -1;
-            } else if (e1.offset > e2.offset) {
-                return 1;
-            } else {
-                return 0;
-            }
+    public static final Comparator<TiffElement> COMPARATOR = (e1, e2) -> {
+        if (e1.offset < e2.offset) {
+            return -1;
+        } else if (e1.offset > e2.offset) {
+            return 1;
+        } else {
+            return 0;
         }
     };
 
@@ -39,13 +36,9 @@ public abstract class TiffElement {
         this.length = length;
     }
 
-    public String getElementDescription() {
-        return getElementDescription(false);
-    }
+    public abstract String getElementDescription();
 
-    public abstract String getElementDescription(boolean verbose);
-
-    public static abstract class DataElement extends TiffElement {
+    public abstract static class DataElement extends TiffElement {
         private final byte[] data;
 
         public DataElement(final long offset, final int length, final byte[] data) {
@@ -55,7 +48,7 @@ public abstract class TiffElement {
         }
 
         public byte[] getData() {
-            return data;
+            return data.clone();
         }
 
         public int getDataLength() {
@@ -69,7 +62,7 @@ public abstract class TiffElement {
         }
 
         @Override
-        public String getElementDescription(final boolean verbose) {
+        public String getElementDescription() {
             return "Element, offset: " + offset + ", length: " + length
                     + ", last: " + (offset + length);
         }

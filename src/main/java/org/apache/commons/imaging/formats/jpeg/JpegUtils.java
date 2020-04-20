@@ -29,7 +29,7 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.BinaryFileParser;
 import org.apache.commons.imaging.common.ByteConversions;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
 public class JpegUtils extends BinaryFileParser {
     public JpegUtils() {
@@ -80,6 +80,9 @@ public class JpegUtils extends BinaryFileParser {
 
                 final byte[] segmentLengthBytes = readBytes("segmentLengthBytes", is, 2, "segmentLengthBytes");
                 final int segmentLength = ByteConversions.toUInt16(segmentLengthBytes, getByteOrder());
+                if (segmentLength < 2) {
+                    throw new ImageReadException("Invalid segment size");
+                }
 
                 final byte[] segmentData = readBytes("Segment Data",
                         is, segmentLength - 2,
@@ -89,8 +92,8 @@ public class JpegUtils extends BinaryFileParser {
                     return;
                 }
             }
-            
-            Debug.debug(Integer.toString(markerCount) + " markers");
+
+            Debug.debug(markerCount + " markers");
         }
     }
 
@@ -148,6 +151,24 @@ public class JpegUtils extends BinaryFileParser {
             return "SOF15_MARKER";
         case JpegConstants.DQT_MARKER:
             return "DQT_MARKER";
+        case JpegConstants.DRI_MARKER:
+            return "DRI_MARKER";
+        case JpegConstants.RST0_MARKER:
+            return "RST0_MARKER";
+        case JpegConstants.RST1_MARKER:
+            return "RST1_MARKER";
+        case JpegConstants.RST2_MARKER:
+            return "RST2_MARKER";
+        case JpegConstants.RST3_MARKER:
+            return "RST3_MARKER";
+        case JpegConstants.RST4_MARKER:
+            return "RST4_MARKER";
+        case JpegConstants.RST5_MARKER:
+            return "RST5_MARKER";
+        case JpegConstants.RST6_MARKER:
+            return "RST6_MARKER";
+        case JpegConstants.RST7_MARKER:
+            return "RST7_MARKER";
         default:
             return "Unknown";
         }

@@ -41,11 +41,123 @@ The <action> type attribute can be add,update,fix,remove.
 
 <document>
   <properties>
-    <title>Release Notes</title>
+    <title>Apache Commons Imaging Release Notes</title>
   </properties>
   <body>
-
-    <release version="1.0" date="TBA" description="First major release">
+    <release version="1.0-alpha2" date="2020-??-??" description="Second 1.0 alpha release">
+      <action issue="IMAGING-254" dev="kinow" type="update">
+        Small code improvements
+      </action>
+      <action issue="IMAGING-253" dev="kinow" type="update" due-to="David Hrbacek">
+        ByteSourceInputStream has initialized its length when reading starts
+      </action>
+      <action issue="IMAGING-249" dev="kinow" type="update">
+        Make IPTCBlock members private and add getter/setter
+      </action>
+      <action issue="IMAGING-248" dev="kinow" type="add" due-to="Greg Shrago">
+        ICNS: missing element types; some safety checks
+      </action>
+      <action issue="IMAGING-246" dev="kinow" type="fix">
+        Invalid Block Size error prevents handling of block 1084, Macintosh NSPrintInfo
+      </action>
+      <action issue="IMAGING-163" dev="kinow" type="fix">
+        Add XmpEmbedabble interface to parsers that support it
+      </action>
+      <action issue="IMAGING-245" dev="kinow" type="add" due-to="Christoffer Rydberg">
+        Add disposal method to GIF metadata
+      </action>
+      <action issue="IMAGING-146" dev="kinow" type="add">
+        Add documentation for the color package
+      </action>
+      <action issue="IMAGING-244" dev="kinow" type="add">
+        Use isEmpty instead of comparing size() with integers
+      </action>
+      <action issue="IMAGING-151" dev="kinow" type="fix">
+        ColorGroup.color_counts is mutable public List and is multiply sorted
+      </action>
+      <action issue="IMAGING-243" dev="kinow" type="add" due-to="Andreas Menze">
+        PNG Writer Indexed Color with semi-transparent Pixels and Better Compression
+      </action>
+      <action issue="IMAGING-242" dev="kinow" type="fix">
+        Upgrade to JUnit 5
+      </action>
+      <action issue="IMAGING-241" dev="kinow" type="fix">
+        Copy byte arrays fixing TODO markers
+      </action>
+      <action issue="IMAGING-136" dev="kinow" type="fix" due-to="Michael Groß">
+        Imaging.getImageInfo() fails to read JPEG file
+      </action>
+      <action issue="IMAGING-238" dev="kinow" type="fix">
+        Return copied byte arrays in Png Chunk and Png Chunk ICCP
+      </action>
+      <action issue="IMAGING-239" dev="kinow" type="add" due-to="Paul Austin">
+        Add inflate (deflate algorithm) to TIFF files
+      </action>
+      <action issue="IMAGING-164" dev="kinow" type="add" due-to="Michael Groß">
+        Simplify code in IcoImageParser::writeImage
+      </action>
+      <action issue="IMAGING-165" dev="kinow" type="add" due-to="Michael Groß">
+        Add the fields from TiffReader.Collector to TiffContents
+      </action>
+      <action issue="IMAGING-230" dev="kinow" type="fix">
+        Properly close resources with try-with-resources in T4AndT6Compression
+      </action>
+      <action issue="IMAGING-134" dev="kinow" type="fix" due-to="Michael Sommerville">
+        Invalid (RST) marker found in entropy data
+      </action>
+      <action issue="IMAGING-130" dev="kinow" type="fix" due-to="Michael Sommerville">
+        Reading of some GIF images throws java.io.IOException: AddStringToTable: codes: 4096 code_size: 12
+      </action>
+      <action issue="IMAGING-228" dev="kinow" type="add">
+        Remove private method PhotometricInterpreterLogLuv#cube by Math.pow
+      </action>
+      <action issue="IMAGING-224" dev="kinow" type="fix">
+        Fix build errors in Travis
+      </action>
+      <action issue="IMAGING-167" dev="kinow" type="fix" due-to="Michael Groß">
+        Possible infinite loop at XpmImageParser::writeImage
+      </action>
+      <action issue="IMAGING-211" dev="kinow" type="fix">
+      	Imaging.getBufferedImage fails throwing java.lang.ArrayIndexOutOfBoundsException for specific inputs
+      </action>
+      <action issue="IMAGING-210" dev="kinow" type="fix">
+        Imaging.getBufferedImage fails throwing NegativeArraySizeException for specific inputs
+      </action>
+      <action issue="IMAGING-236" dev="kinow" type="add" due-to="Christoffer Rydberg">
+        Add support to read multiple images from GIF
+      </action>
+    </release>
+    <release version="1.0-alpha1" date="2019-04-28" description="First 1.0 alpha release">
+      <action issue="IMAGING-199" dev="kinow" type="fix" due-to="Ric Emery">
+        All tEXt chunks are not returned from PngImageParser.getMetadata
+      </action>
+      <action issue="IMAGING-220" dev="kinow" type="fix">
+        JpegDecoder takes a long time (+10s) to decode a bad JPEG
+      </action>
+      <action issue="IMAGING-219" dev="kinow" type="fix">
+        Imaging gets stuck parsing a RGBE input file
+      </action>
+      <action issue="IMAGING-154" dev="kinow" type="update">
+        Remove Debug class
+      </action>
+      <action issue="IMAGING-124" dev="kinow" type="update" due-to="Jens Kapitza">
+        Tidy up IconParser
+      </action>
+      <action issue="IMAGING-215" dev="kinow" type="fix">
+        ArrayIndexOutOfBoundsException in DhtSegment
+      </action>
+      <action issue="IMAGING-203" dev="kinow" type="fix" due-to="Rody Kersten">
+        JPEG segment size not validated
+      </action>
+      <action issue="IMAGING-123" dev="kinow" type="update" due-to="Jens Kapitza">
+        remove duplicated lines in T4AndT6Compression
+      </action>
+      <action issue="IMAGING-209" dev="kinow" type="fix" due-to="Isak Wertwein">
+        PnmImageParser throws ImageWriteException when writing if PnmImageParser.PARAM_KEY_PNM_RAWBITS is provided
+      </action>
+      <action issue="IMAGING-205" dev="kinow" type="fix">
+        Imaging (Apache Sanselan) produces "odd offsets" in (EXIF) metadata
+      </action>
       <action issue="IMAGING-195" dev="britter" type="fix" due-to="Keith Strydom">
         Incorrect Maven coordinates on project website
       </action>
@@ -352,6 +464,9 @@ The <action> type attribute can be add,update,fix,remove.
       </action>
       <action issue="IMAGING-94" dev="damjan" type="add" due-to="gwlucas">
          Add ability to load partial TIFF images
+      </action>
+      <action issue="IMAGING-223" dev="ggregory" type="update" due-to="Gary Gregory">
+         Update from Java 7 to Java 8.
       </action>
     </release>
     

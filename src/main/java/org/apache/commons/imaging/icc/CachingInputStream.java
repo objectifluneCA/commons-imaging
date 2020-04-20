@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.icc;
 
 import java.io.ByteArrayOutputStream;
@@ -25,7 +24,7 @@ class CachingInputStream extends InputStream {
     private final InputStream is;
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    public CachingInputStream(final InputStream is) {
+    CachingInputStream(final InputStream is) {
         this.is = is;
     }
 

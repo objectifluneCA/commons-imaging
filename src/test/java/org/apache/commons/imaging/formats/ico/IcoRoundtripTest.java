@@ -17,8 +17,8 @@
 
 package org.apache.commons.imaging.formats.ico;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -32,9 +32,9 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.BinaryOutputStream;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IcoRoundtripTest extends IcoBaseTest {
     // 16x16 test image
@@ -68,7 +68,7 @@ public class IcoRoundtripTest extends IcoBaseTest {
         generatorMap.put(32, new GeneratorFor32BitBitmaps());
     }
 
-    private static interface BitmapGenerator {
+    private interface BitmapGenerator {
         byte[] generateBitmap(int foreground, int background, int paletteSize)
                 throws IOException, ImageWriteException;
     }
@@ -525,7 +525,7 @@ public class IcoRoundtripTest extends IcoBaseTest {
         writeBITMAPINFOHEADER(bos, 16, 2 * 16, 1, 32, 0, 0, 0);
         bos.write(bitmap);
         bos.flush();
-        // Because every pixel is fully trasparent, ***ALPHA GETS IGNORED***:
+        // Because every pixel is fully transparent, ***ALPHA GETS IGNORED***:
         writeAndReadImageData("16x16x32-fully-transparent", baos.toByteArray(),
                 0xFF000000, 0xFFFFFFFF);
     }
@@ -537,7 +537,7 @@ public class IcoRoundtripTest extends IcoBaseTest {
         // File exportFile = new File("/tmp/" + description + ".ico");
         // IoUtils.writeToFile(rawData, exportFile);
 
-        final File tempFile = createTempFile("temp", ".ico");
+        final File tempFile = File.createTempFile("temp", ".ico");
         FileUtils.writeByteArrayToFile(tempFile, rawData);
 
         final BufferedImage dstImage = Imaging.getBufferedImage(tempFile);

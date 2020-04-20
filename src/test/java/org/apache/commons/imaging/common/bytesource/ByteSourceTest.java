@@ -14,27 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.common.bytesource;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.apache.commons.imaging.ImagingTest;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.io.*;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class ByteSourceTest extends ImagingTest {
     protected File createTempFile(final byte src[]) throws IOException {
-        final File file = createTempFile("raw_", ".bin");
+        final File file = File.createTempFile("raw_", ".bin");
 
         // write test bytes to file.
         try (FileOutputStream fos = new FileOutputStream(file);
-                OutputStream os = new BufferedOutputStream(fos)) {
+             OutputStream os = new BufferedOutputStream(fos)) {
             os.write(src);
         }
 
@@ -66,6 +62,16 @@ public abstract class ByteSourceTest extends ImagingTest {
         }
         final byte longArray[] = (baos.toByteArray());
 
-        return new byte[][] { emptyArray, single, simple, zeroes, longArray, };
+        return new byte[][]{emptyArray, single, simple, zeroes, longArray,};
     }
+
+    @Test
+    public void testGetInputStreamThrowsNullPointerException() throws IOException {
+        final ByteSourceArray byteSourceArray = new ByteSourceArray(null);
+
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            byteSourceArray.getInputStream(0L);
+        });
+    }
+
 }

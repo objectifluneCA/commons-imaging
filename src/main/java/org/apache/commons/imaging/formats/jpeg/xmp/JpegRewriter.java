@@ -39,24 +39,9 @@ import org.apache.commons.imaging.formats.jpeg.iptc.IptcParser;
  */
 public class JpegRewriter extends BinaryFileParser {
     private static final ByteOrder JPEG_BYTE_ORDER = ByteOrder.BIG_ENDIAN;
-    private static final SegmentFilter EXIF_SEGMENT_FILTER = new SegmentFilter() {
-        @Override
-        public boolean filter(final JFIFPieceSegment segment) {
-            return segment.isExifSegment();
-        }
-    };
-    private static final SegmentFilter XMP_SEGMENT_FILTER = new SegmentFilter() {
-        @Override
-        public boolean filter(final JFIFPieceSegment segment) {
-            return segment.isXmpSegment();
-        }
-    };
-    private static final SegmentFilter PHOTOSHOP_APP13_SEGMENT_FILTER = new SegmentFilter() {
-        @Override
-        public boolean filter(final JFIFPieceSegment segment) {
-            return segment.isPhotoshopApp13Segment();
-        }
-    };
+    private static final SegmentFilter EXIF_SEGMENT_FILTER = segment -> segment.isExifSegment();
+    private static final SegmentFilter XMP_SEGMENT_FILTER = segment -> segment.isXmpSegment();
+    private static final SegmentFilter PHOTOSHOP_APP13_SEGMENT_FILTER = segment -> segment.isPhotoshopApp13Segment();
 
     /**
      * Constructor. to guess whether a file contains an image based on its file
@@ -105,7 +90,7 @@ public class JpegRewriter extends BinaryFileParser {
             this.marker = marker;
             this.markerBytes = markerBytes;
             this.segmentLengthBytes = segmentLengthBytes;
-            this.segmentData = segmentData; // TODO clone?
+            this.segmentData = segmentData.clone();
         }
 
         @Override
@@ -160,7 +145,7 @@ public class JpegRewriter extends BinaryFileParser {
         }
 
         public byte[] getSegmentData() {
-            return segmentData; // TODO clone?
+            return segmentData.clone();
         }
 
     }
@@ -182,10 +167,7 @@ public class JpegRewriter extends BinaryFileParser {
         }
     }
 
-    protected JFIFPieces analyzeJFIF(final ByteSource byteSource)
-            throws ImageReadException, IOException
-    // , ImageWriteException
-    {
+    protected JFIFPieces analyzeJFIF(final ByteSource byteSource) throws ImageReadException, IOException {
         final List<JFIFPiece> pieces = new ArrayList<>();
         final List<JFIFPiece> segmentPieces = new ArrayList<>();
 
@@ -281,7 +263,7 @@ public class JpegRewriter extends BinaryFileParser {
             }
         }
 
-        final List<JFIFPiece> result = new ArrayList<JFIFPiece>(segments);
+        final List<JFIFPiece> result = new ArrayList<>(segments);
         if (firstAppIndex == -1) {
             throw new ImageWriteException("JPEG file has no APP segments.");
         }
@@ -304,9 +286,9 @@ public class JpegRewriter extends BinaryFileParser {
             }
         }
 
-        final List<JFIFPiece> result = new ArrayList<JFIFPiece>(segments);
+        final List<JFIFPiece> result = new ArrayList<>(segments);
         if (lastAppIndex == -1) {
-            if (segments.size() < 1) {
+            if (segments.isEmpty()) {
                 throw new ImageWriteException("JPEG file has no APP segments.");
             }
             result.addAll(1, newSegments);

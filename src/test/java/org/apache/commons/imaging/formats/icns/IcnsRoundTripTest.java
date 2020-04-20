@@ -17,8 +17,8 @@
 
 package org.apache.commons.imaging.formats.icns;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -29,9 +29,9 @@ import java.nio.ByteOrder;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.BinaryOutputStream;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IcnsRoundTripTest extends IcnsBaseTest {
     // 16x16 test image
@@ -370,7 +370,7 @@ public class IcnsRoundTripTest extends IcnsBaseTest {
             } catch (final ImageReadException imageReadException) {
                 threw = true;
             }
-            assertTrue("ICNS file with corrupt mask didn't fail to parse", threw);
+            assertTrue(threw);
         }
     }
 
@@ -407,7 +407,7 @@ public class IcnsRoundTripTest extends IcnsBaseTest {
     private void writeAndReadImageData(final String description, final byte[] rawData,
             final int foreground, final int background) throws IOException,
             ImageReadException {
-        final File exportFile = createTempFile(description, ".icns");
+        final File exportFile = File.createTempFile(description, ".icns");
         FileUtils.writeByteArrayToFile(exportFile, rawData);
         final BufferedImage dstImage = Imaging.getBufferedImage(exportFile);
 

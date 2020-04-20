@@ -16,15 +16,21 @@
  */
 package org.apache.commons.imaging.formats.jpeg.segments;
 
+import static org.apache.commons.imaging.common.BinaryFunctions.read2Bytes;
+import static org.apache.commons.imaging.common.BinaryFunctions.readByte;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.formats.jpeg.JpegConstants;
 
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
-
 public class SofnSegment extends Segment {
+
+    private static final Logger LOGGER = Logger.getLogger(SofnSegment.class.getName());
+
     public final int width;
     public final int height;
     public final int numberOfComponents;
@@ -54,8 +60,8 @@ public class SofnSegment extends Segment {
             throws IOException {
         super(marker, markerLength);
 
-        if (getDebug()) {
-            System.out.println("SOF0Segment marker_length: " + markerLength);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("SOF0Segment marker_length: " + markerLength);
         }
 
         precision = readByte("Data_precision", is, "Not a Valid JPEG File");
@@ -78,12 +84,8 @@ public class SofnSegment extends Segment {
                     horizontalSamplingFactor, verticalSamplingFactor,
                     quantTabDestSelector);
         }
-
-        if (getDebug()) {
-            System.out.println("");
-        }
     }
-    
+
     /**
      * Returns a copy of all the components.
      * @return the components
@@ -91,7 +93,7 @@ public class SofnSegment extends Segment {
     public Component[] getComponents() {
         return components.clone();
     }
-    
+
     /**
      * Returns the component at the specified index.
      * @param index the array index
@@ -100,7 +102,7 @@ public class SofnSegment extends Segment {
     public Component getComponents(final int index) {
         return components[index];
     }
-    
+
 
     @Override
     public String getDescription() {

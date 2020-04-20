@@ -22,6 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageReadException;
 
@@ -30,18 +32,17 @@ public enum IccTagDataTypes implements IccTagDataType {
             "descType", 0x64657363) {
         @Override
         public void dump(final String prefix, final byte[] bytes)
-                throws ImageReadException, IOException
-        {
+                throws ImageReadException, IOException {
             try (InputStream bis = new ByteArrayInputStream(bytes)) {
                 read4Bytes("type_signature", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
-    
+
                 //            bis.setDebug(true);
                 read4Bytes("ignore", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
                 final int stringLength = read4Bytes("stringLength", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
-    
+
                 //            bis.readByteArray("ignore", bytes.length -12, "none");
-                final String s = new String(bytes, 12, stringLength - 1, "US-ASCII");
-                System.out.println(prefix + "s: '" + s + "'");
+                final String s = new String(bytes, 12, stringLength - 1, StandardCharsets.US_ASCII);
+                LOGGER.fine(prefix + "s: '" + s + "'");
             }
         }
 
@@ -51,8 +52,7 @@ public enum IccTagDataTypes implements IccTagDataType {
             "dataType", 0x64617461) {
         @Override
         public void dump(final String prefix, final byte[] bytes)
-                throws ImageReadException, IOException
-        {
+                throws ImageReadException, IOException {
             try (InputStream bis = new ByteArrayInputStream(bytes)) {
                 read4Bytes("type_signature", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
             }
@@ -64,8 +64,7 @@ public enum IccTagDataTypes implements IccTagDataType {
             "multiLocalizedUnicodeType", (0x6D6C7563)) {
         @Override
         public void dump(final String prefix, final byte[] bytes)
-                throws ImageReadException, IOException
-        {
+                throws ImageReadException, IOException {
             try (InputStream bis = new ByteArrayInputStream(bytes)) {
                 read4Bytes("type_signature", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
             }
@@ -77,13 +76,12 @@ public enum IccTagDataTypes implements IccTagDataType {
             "signatureType", ((0x73696720))) {
         @Override
         public void dump(final String prefix, final byte[] bytes)
-                throws ImageReadException, IOException
-        {
+                throws ImageReadException, IOException {
             try (InputStream bis = new ByteArrayInputStream(bytes)) {
                 read4Bytes("type_signature", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
                 read4Bytes("ignore", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
                 final int thesignature = read4Bytes("thesignature ", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
-                System.out.println(prefix
+                LOGGER.fine(prefix
                         + "thesignature: "
                         + Integer.toHexString(thesignature)
                         + " ("
@@ -91,7 +89,7 @@ public enum IccTagDataTypes implements IccTagDataType {
                                 (byte) (0xff & (thesignature >> 24)),
                                 (byte) (0xff & (thesignature >> 16)),
                                 (byte) (0xff & (thesignature >> 8)),
-                                (byte) (0xff & (thesignature >> 0)), }, "US-ASCII")
+                                (byte) (0xff & (thesignature >> 0)), }, StandardCharsets.US_ASCII)
                         + ")");
             }
         }
@@ -102,17 +100,18 @@ public enum IccTagDataTypes implements IccTagDataType {
             "textType", 0x74657874) {
         @Override
         public void dump(final String prefix, final byte[] bytes)
-                throws ImageReadException, IOException
-        {
+                throws ImageReadException, IOException {
             try (InputStream bis = new ByteArrayInputStream(bytes)) {
                 read4Bytes("type_signature", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
                 read4Bytes("ignore", bis, "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
-                final String s = new String(bytes, 8, bytes.length - 8, "US-ASCII");
-                System.out.println(prefix + "s: '" + s + "'");
+                final String s = new String(bytes, 8, bytes.length - 8, StandardCharsets.US_ASCII);
+                LOGGER.fine(prefix + "s: '" + s + "'");
             }
         }
 
     };
+
+    private static final Logger LOGGER = Logger.getLogger(IccTagDataTypes.class.getName());
 
     public final String name;
     public final int signature;
@@ -121,12 +120,12 @@ public enum IccTagDataTypes implements IccTagDataType {
         this.name = name;
         this.signature = signature;
     }
-    
+
     @Override
     public String getName() {
         return name;
     }
-    
+
     @Override
     public int getSignature() {
         return signature;

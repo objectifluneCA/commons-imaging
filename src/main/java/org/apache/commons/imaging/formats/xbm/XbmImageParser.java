@@ -2,9 +2,9 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,7 +12,6 @@
  *  limitations under the License.
  *  under the License.
  */
-
 package org.apache.commons.imaging.formats.xbm;
 
 import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_FORMAT;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,7 +109,7 @@ public class XbmImageParser extends ImageParser {
         int xHot = -1;
         int yHot = -1;
 
-        public XbmHeader(final int width, final int height, final int xHot, final int yHot) {
+        XbmHeader(final int width, final int height, final int xHot, final int yHot) {
             this.width = width;
             this.height = height;
             this.xHot = xHot;
@@ -150,13 +150,13 @@ public class XbmImageParser extends ImageParser {
             for (final Entry<String, String> entry : defines.entrySet()) {
                 final String name = entry.getKey();
                 if (name.endsWith("_width")) {
-                    width = Integer.parseInt(entry.getValue());
+                    width = parseCIntegerLiteral(entry.getValue());
                 } else if (name.endsWith("_height")) {
-                    height = Integer.parseInt(entry.getValue());
+                    height = parseCIntegerLiteral(entry.getValue());
                 } else if (name.endsWith("_x_hot")) {
-                    xHot = Integer.parseInt(entry.getValue());
+                    xHot = parseCIntegerLiteral(entry.getValue());
                 } else if (name.endsWith("_y_hot")) {
-                    yHot = Integer.parseInt(entry.getValue());
+                    yHot = parseCIntegerLiteral(entry.getValue());
                 }
              }
             if (width == -1) {
@@ -174,6 +174,22 @@ public class XbmImageParser extends ImageParser {
         }
     }
 
+    private static int parseCIntegerLiteral(final String value) {
+        if (value.startsWith("0")) {
+            if (value.length() >= 2) {
+                if (value.charAt(1) == 'x' || value.charAt(1) == 'X') {
+                    return Integer.parseInt(value.substring(2), 16);
+                } else {
+                    return Integer.parseInt(value.substring(1), 8);
+                }
+            } else {
+                return 0;
+            }
+        } else {
+            return Integer.parseInt(value);
+        }
+    }
+
     private BufferedImage readXbmImage(final XbmHeader xbmHeader, final BasicCParser cParser)
             throws ImageReadException, IOException {
         String token;
@@ -186,7 +202,7 @@ public class XbmImageParser extends ImageParser {
         if (token == null) {
             throw new ImageReadException(
                     "Parsing XBM file failed, no 'unsigned' "
-                            + "or 'char' token");
+                            + "or 'char' or 'short' token");
         }
         if ("unsigned".equals(token)) {
             token = cParser.nextToken();
@@ -284,7 +300,7 @@ public class XbmImageParser extends ImageParser {
         final ColorModel colorModel = new IndexColorModel(1, 2, palette, 0, false, -1, DataBuffer.TYPE_BYTE);
         final DataBufferByte dataBuffer = new DataBufferByte(imageData, imageData.length);
         final WritableRaster raster = Raster.createPackedRaster(dataBuffer, xbmHeader.width, xbmHeader.height, 1, null);
-        
+
         return new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), new Properties());
     }
 
@@ -302,7 +318,7 @@ public class XbmImageParser extends ImageParser {
         return readXbmImage(result.xbmHeader, result.cParser);
     }
 
-    private String randomName() {
+    private static String randomName() {
         final UUID uuid = UUID.randomUUID();
         final StringBuilder stringBuilder = new StringBuilder("a");
         long bits = uuid.getMostSignificantBits();
@@ -317,7 +333,7 @@ public class XbmImageParser extends ImageParser {
         return stringBuilder.toString();
     }
 
-    private String toPrettyHex(final int value) {
+    private static String toPrettyHex(final int value) {
         final String s = Integer.toHexString(0xff & value);
         if (s.length() == 2) {
             return "0x" + s;
@@ -329,7 +345,7 @@ public class XbmImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
@@ -343,9 +359,9 @@ public class XbmImageParser extends ImageParser {
 
         final String name = randomName();
 
-        os.write(("#define " + name + "_width " + src.getWidth() + "\n").getBytes("US-ASCII"));
-        os.write(("#define " + name + "_height " + src.getHeight() + "\n").getBytes("US-ASCII"));
-        os.write(("static unsigned char " + name + "_bits[] = {").getBytes("US-ASCII"));
+        os.write(("#define " + name + "_width " + src.getWidth() + "\n").getBytes(StandardCharsets.US_ASCII));
+        os.write(("#define " + name + "_height " + src.getHeight() + "\n").getBytes(StandardCharsets.US_ASCII));
+        os.write(("static unsigned char " + name + "_bits[] = {").getBytes(StandardCharsets.US_ASCII));
 
         int bitcache = 0;
         int bitsInCache = 0;
@@ -366,48 +382,32 @@ public class XbmImageParser extends ImageParser {
                 bitcache |= (sample << bitsInCache);
                 ++bitsInCache;
                 if (bitsInCache == 8) {
-                    os.write(separator.getBytes("US-ASCII"));
+                    os.write(separator.getBytes(StandardCharsets.US_ASCII));
                     separator = ",";
                     if (written == 12) {
-                        os.write("\n  ".getBytes("US-ASCII"));
+                        os.write("\n  ".getBytes(StandardCharsets.US_ASCII));
                         written = 0;
                     }
-                    os.write(toPrettyHex(bitcache).getBytes("US-ASCII"));
+                    os.write(toPrettyHex(bitcache).getBytes(StandardCharsets.US_ASCII));
                     bitcache = 0;
                     bitsInCache = 0;
                     ++written;
                 }
             }
             if (bitsInCache != 0) {
-                os.write(separator.getBytes("US-ASCII"));
+                os.write(separator.getBytes(StandardCharsets.US_ASCII));
                 separator = ",";
                 if (written == 12) {
-                    os.write("\n  ".getBytes("US-ASCII"));
+                    os.write("\n  ".getBytes(StandardCharsets.US_ASCII));
                     written = 0;
                 }
-                os.write(toPrettyHex(bitcache).getBytes("US-ASCII"));
+                os.write(toPrettyHex(bitcache).getBytes(StandardCharsets.US_ASCII));
                 bitcache = 0;
                 bitsInCache = 0;
                 ++written;
             }
         }
 
-        os.write("\n};\n".getBytes("US-ASCII"));
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
+        os.write("\n};\n".getBytes(StandardCharsets.US_ASCII));
     }
 }

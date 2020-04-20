@@ -27,16 +27,20 @@ package org.apache.commons.imaging.icc;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.BinaryFunctions;
 
 public class IccTag {
+
+    private static final Logger LOGGER = Logger.getLogger(IccTag.class.getName());
+
     public final int signature;
     public final int offset;
     public final int length;
@@ -62,9 +66,9 @@ public class IccTag {
         data = bytes;
 
         try (InputStream bis = new ByteArrayInputStream(bytes)) {
-            dataTypeSignature = BinaryFunctions.read4Bytes("data type signature", bis, 
+            dataTypeSignature = BinaryFunctions.read4Bytes("data type signature", bis,
                     "ICC: corrupt tag data", ByteOrder.BIG_ENDIAN);
-    
+
             itdt = getIccTagDataType(dataTypeSignature);
             // if (itdt != null)
             // {
@@ -84,11 +88,12 @@ public class IccTag {
     }
 
     public void dump(final String prefix) throws ImageReadException, IOException {
-        final PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()));
-
-        dump(pw, prefix);
-
-        pw.flush();
+        try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
+            dump(pw, prefix);
+            pw.flush();
+            sw.flush();
+            LOGGER.fine(sw.toString());
+        }
     }
 
     public void dump(final PrintWriter pw, final String prefix) throws ImageReadException,
@@ -101,7 +106,7 @@ public class IccTag {
                         (byte) (0xff & (signature >> 24)),
                         (byte) (0xff & (signature >> 16)),
                         (byte) (0xff & (signature >> 8)),
-                        (byte) (0xff & (signature >> 0)), }, "US-ASCII")
+                        (byte) (0xff & (signature >> 0)), }, StandardCharsets.US_ASCII)
                 + ")");
 
         if (data == null) {
@@ -117,7 +122,7 @@ public class IccTag {
                             (byte) (0xff & (dataTypeSignature >> 24)),
                             (byte) (0xff & (dataTypeSignature >> 16)),
                             (byte) (0xff & (dataTypeSignature >> 8)),
-                            (byte) (0xff & (dataTypeSignature >> 0)), }, "US-ASCII")
+                            (byte) (0xff & (dataTypeSignature >> 0)), }, StandardCharsets.US_ASCII)
                     + ")");
 
             if (itdt == null) {

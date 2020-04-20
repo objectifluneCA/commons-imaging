@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.formats.bmp;
 
 import java.io.File;
@@ -35,12 +34,7 @@ public abstract class BmpBaseTest extends ImagingTest {
         return format == ImageFormats.BMP;
     }
 
-    private static final ImageFilter IMAGE_FILTER = new ImageFilter() {
-        @Override
-        public boolean accept(final File file) throws IOException, ImageReadException {
-            return isBmp(file);
-        }
-    };
+    private static final ImageFilter IMAGE_FILTER = file -> isBmp(file);
 
     protected static List<File> getBmpImages() throws IOException, ImageReadException {
         return getTestImages(IMAGE_FILTER);

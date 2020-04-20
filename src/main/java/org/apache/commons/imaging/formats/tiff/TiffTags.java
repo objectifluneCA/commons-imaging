@@ -77,7 +77,7 @@ final class TiffTags {
 
         return Collections.unmodifiableList(result);
     }
-    
+
     private static Map<Integer, List<TagInfo>> makeTagMap(
             final List<TagInfo> tags) {
         // make sure to use the thread-safe version; this is shared state.
@@ -127,7 +127,7 @@ final class TiffTags {
     private static TagInfo getTag(final int directoryType, final List<TagInfo> possibleMatches) {
         // Please keep this method in sync with TiffImageMetadata's findField()
 
-        if (possibleMatches.size() < 1) {
+        if (possibleMatches.isEmpty()) {
             return null;
         }
 

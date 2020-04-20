@@ -17,34 +17,36 @@
 
 package org.apache.commons.imaging.formats.jpeg.exif;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
-import java.util.Collection;
+import java.util.stream.Stream;
 
+import org.apache.commons.imaging.common.bytesource.ByteSourceFile;
 import org.apache.commons.imaging.examples.WriteExifMetadataExample;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.apache.commons.imaging.formats.jpeg.JpegImageParser;
+import org.apache.commons.imaging.formats.tiff.TiffField;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class WriteExifMetadataExampleTest extends ExifBaseTest {
 
-    private final File imageFile;
-
-    @Parameterized.Parameters
-    public static Collection<File> data() throws Exception {
-        return getJpegImages();
+    public static Stream<File> data() throws Exception {
+        return getJpegImages().stream();
     }
 
-    public WriteExifMetadataExampleTest(final File imageFile) {
-        this.imageFile = imageFile;
-    }
-
-    @Test
-    public void testInsert() throws Exception {
+    /**
+     * Test that there are no odd offsets in the generated TIFF images.
+     * @throws Exception if the test failed for a unexpected reason
+     */
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testOddOffsets(File imageFile) throws Exception {
         Debug.debug("imageFile", imageFile.getAbsoluteFile());
 
-        final File tempFile = createTempFile("test", ".jpg");
+        final File tempFile = File.createTempFile("test", ".jpg");
         Debug.debug("tempFile", tempFile.getAbsoluteFile());
 
         try {
@@ -53,7 +55,15 @@ public class WriteExifMetadataExampleTest extends ExifBaseTest {
                 return;
             }
             new WriteExifMetadataExample().changeExifMetadata(imageFile, tempFile);
-            // TODO assert that ExifMetadata has been changed
+            final JpegImageParser parser = new JpegImageParser();
+            final ByteSourceFile byteSource = new ByteSourceFile(tempFile);
+            final TiffImageMetadata tiff = parser.getExifMetadata(byteSource, null);
+            for (final TiffField tiffField : tiff.getAllFields()) {
+                if (!tiffField.isLocalValue()) {
+                    final boolean isOdd = (tiffField.getOffset() & 1L) == 0;
+                    assertTrue(isOdd);
+                }
+            }
         } catch (final ExifRewriter.ExifOverflowException e) {
             Debug.debug("Ignoring unavoidable ExifOverflowException: " + e.getMessage());
             Debug.debug("Error image: " + imageFile.getAbsoluteFile());

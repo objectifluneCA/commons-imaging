@@ -16,13 +16,13 @@
  */
 package org.apache.commons.imaging.formats.png.chunks;
 
+import static org.apache.commons.imaging.common.BinaryFunctions.readByte;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.formats.png.GammaCorrection;
-
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
 
 public class PngChunkPlte extends PngChunk {
     private final int[] rgb;
@@ -54,7 +54,7 @@ public class PngChunkPlte extends PngChunk {
     }
 
     public int[] getRgb() {
-        return rgb; // TODO clone? Is the method used?
+        return rgb.clone();
     }
 
     public int getRGB(final int index) throws ImageReadException {

@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageWriteException;
 
@@ -32,9 +34,11 @@ import org.apache.commons.imaging.ImageWriteException;
  * Factory for creating palettes.
  */
 public class PaletteFactory {
-    private static final boolean DEBUG = false;
+
+    private static final Logger LOGGER = Logger.getLogger(PaletteFactory.class.getName());
+
     public static final int COMPONENTS = 3; // in bits
-    
+
     /**
      * Builds an exact complete opaque palette containing all the colors in {@code src},
      * using an algorithm that is faster than {@linkplain #makeExactRgbPaletteSimple} for large images
@@ -66,8 +70,8 @@ public class PaletteFactory {
             count += Integer.bitCount(eight);
         }
 
-        if (DEBUG) {
-            System.out.println("Used colors: " + count);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("Used colors: " + count);
         }
 
         final int[] colormap = new int[count];
@@ -127,7 +131,7 @@ public class PaletteFactory {
 
     private DivisionCandidate finishDivision(final ColorSpaceSubset subset,
             final int component, final int precision, final int sum, final int slice) {
-        if (DEBUG) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             subset.dump("trying (" + component + "): ");
         }
 
@@ -155,13 +159,13 @@ public class PaletteFactory {
         sliceMaxs[component] = slice;
         sliceMins[component] = slice + 1;
 
-        if (DEBUG) {
-            System.out.println("total: " + total);
-            System.out.println("first total: " + sum);
-            System.out.println("second total: " + (total - sum));
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("total: " + total);
+            LOGGER.finest("first total: " + sum);
+            LOGGER.finest("second total: " + (total - sum));
             // System.out.println("start: " + start);
             // System.out.println("end: " + end);
-            System.out.println("slice: " + slice);
+            LOGGER.finest("slice: " + slice);
 
         }
 
@@ -174,7 +178,7 @@ public class PaletteFactory {
 
     private List<DivisionCandidate> divideSubset2(final int[] table,
             final ColorSpaceSubset subset, final int component, final int precision) {
-        if (DEBUG) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             subset.dump("trying (" + component + "): ");
         }
 
@@ -258,7 +262,7 @@ public class PaletteFactory {
         private final ColorSpaceSubset dst_a;
         private final ColorSpaceSubset dst_b;
 
-        public DivisionCandidate(final ColorSpaceSubset dst_a, final ColorSpaceSubset dst_b) {
+        DivisionCandidate(final ColorSpaceSubset dst_a, final ColorSpaceSubset dst_b) {
             // this.src = src;
             this.dst_a = dst_a;
             this.dst_b = dst_b;
@@ -291,8 +295,8 @@ public class PaletteFactory {
             if (maxSubset == null) {
                 return v;
             }
-            if (DEBUG) {
-                System.out.println("\t" + "area: " + maxArea);
+            if (LOGGER.isLoggable(Level.FINEST)) {
+                LOGGER.finest("\t" + "area: " + maxArea);
             }
 
             final DivisionCandidate dc = divideSubset2(table, maxSubset,
@@ -334,9 +338,9 @@ public class PaletteFactory {
         final ColorSpaceSubset all = new ColorSpaceSubset(width * height, precision);
         subsets.add(all);
 
-        if (DEBUG) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             final int preTotal = getFrequencyTotal(table, all.mins, all.maxs, precision);
-            System.out.println("pre total: " + preTotal);
+            LOGGER.finest("pre total: " + preTotal);
         }
 
         // step 1: count frequency of colors
@@ -350,17 +354,17 @@ public class PaletteFactory {
             }
         }
 
-        if (DEBUG) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             final int allTotal = getFrequencyTotal(table, all.mins, all.maxs, precision);
-            System.out.println("all total: " + allTotal);
-            System.out.println("width * height: " + (width * height));
+            LOGGER.finest("all total: " + allTotal);
+            LOGGER.finest("width * height: " + (width * height));
         }
 
         subsets = divide(subsets, max, table, precision);
 
-        if (DEBUG) {
-            System.out.println("subsets: " + subsets.size());
-            System.out.println("width*height: " + width * height);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("subsets: " + subsets.size());
+            LOGGER.finest("width*height: " + width * height);
         }
 
         for (int i = 0; i < subsets.size(); i++) {
@@ -368,7 +372,7 @@ public class PaletteFactory {
 
             subset.setAverageRGB(table);
 
-            if (DEBUG) {
+            if (LOGGER.isLoggable(Level.FINEST)) {
                 subset.dump(i + ": ");
             }
         }
@@ -377,7 +381,7 @@ public class PaletteFactory {
 
         return new QuantizedPalette(subsets, precision);
     }
-    
+
     /**
      * Builds an inexact possibly translucent palette of at most {@code max} colors in {@code src}
      * using the traditional Median Cut algorithm. Color bounding boxes are split along the
@@ -387,10 +391,11 @@ public class PaletteFactory {
      * @param transparent whether to consider the alpha values
      * @param max the maximum number of colors the palette can contain
      * @return the palette of at most {@code max} colors
+     * @throws ImageWriteException if it fails to process the palette
      */
     public Palette makeQuantizedRgbaPalette(final BufferedImage src, final boolean transparent, final int max) throws ImageWriteException {
         return new MedianCutQuantizer(!transparent).process(src, max,
-                new LongestAxisMedianCut(), false);
+                new LongestAxisMedianCut());
     }
 
     /**
@@ -417,7 +422,7 @@ public class PaletteFactory {
                 }
             }
         }
-        
+
         final int[] result = new int[rgbs.size()];
         int next = 0;
         for (final int rgb : rgbs) {

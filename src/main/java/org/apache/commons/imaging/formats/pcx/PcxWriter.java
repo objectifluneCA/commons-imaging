@@ -2,9 +2,9 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,9 @@ class PcxWriter {
     private PixelDensity pixelDensity;
     private final RleWriter rleWriter;
 
-    public PcxWriter(Map<String, Object> params) throws ImageWriteException {
+    PcxWriter(Map<String, Object> params) throws ImageWriteException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(ImagingConstants.PARAM_KEY_FORMAT)) {
@@ -78,7 +78,7 @@ class PcxWriter {
                 bitDepthWanted = ((Number) value).intValue();
             }
         }
-        
+
         if (params.containsKey(PcxConstants.PARAM_KEY_PCX_PLANES)) {
             final Object value = params.remove(PcxConstants.PARAM_KEY_PCX_PLANES);
             if (value != null) {
@@ -110,7 +110,7 @@ class PcxWriter {
             throw new ImageWriteException("Unknown parameter: " + firstKey);
         }
     }
-    
+
     public void writeImage(final BufferedImage src, final OutputStream os)
             throws ImageWriteException, IOException {
         final PaletteFactory paletteFactory = new PaletteFactory();
@@ -142,8 +142,13 @@ class PcxWriter {
             bitDepth = 1;
             planes = 3;
         } else if (palette.length() > 2 || bitDepthWanted == 2) {
-            bitDepth = 1;
-            planes = 2;
+            if (planesWanted == 2) {
+                bitDepth = 1;
+                planes = 2;
+            } else {
+                bitDepth = 2;
+                planes = 1;
+            }
         } else {
             boolean onlyBlackAndWhite = true;
             if (palette.length() >= 1) {
@@ -166,13 +171,13 @@ class PcxWriter {
                 planes = 2;
             }
         }
-        
+
         int bytesPerLine = (bitDepth * src.getWidth() + 7) / 8;
         if ((bytesPerLine % 2) != 0) {
             // must be even:
             bytesPerLine++;
         }
-        
+
         final byte[] palette16 = new byte[16 * 3];
         for (int i = 0; i < 16; i++) {
             int rgb;
@@ -211,7 +216,7 @@ class PcxWriter {
         } else {
             writePixels(src, bitDepth, planes, bytesPerLine, palette, bos);
         }
-        
+
         if (bitDepth == 8 && planes == 1) {
             // 256 color palette
             bos.write(12);
@@ -228,7 +233,7 @@ class PcxWriter {
             }
         }
     }
-    
+
     private void writePixels(final BufferedImage src, final int bitDepth, final int planes,
             final int bytesPerLine, final SimplePalette palette, final BinaryOutputStream bos) throws IOException, ImageWriteException {
         final byte[] plane0 = new byte[bytesPerLine];
@@ -236,12 +241,12 @@ class PcxWriter {
         final byte[] plane2 = new byte[bytesPerLine];
         final byte[] plane3 = new byte[bytesPerLine];
         final byte[][] allPlanes = { plane0, plane1, plane2, plane3 };
-        
+
         for (int y = 0; y < src.getHeight(); y++) {
             for (int i = 0; i < planes; i++) {
                 Arrays.fill(allPlanes[i], (byte)0);
             }
-            
+
             if (bitDepth == 1 && planes == 1) {
                 for (int x = 0; x < src.getWidth(); x++) {
                     final int rgb = 0xffffff & src.getRGB(x, y);
@@ -277,6 +282,12 @@ class PcxWriter {
                     plane2[x >>> 3] |= ((index & 4) >> 2) << (7 - (x & 7));
                     plane3[x >>> 3] |= ((index & 8) >> 3) << (7 - (x & 7));
                 }
+            } else if (bitDepth == 2 && planes == 1) {
+                for (int x = 0; x < src.getWidth(); x++) {
+                    final int argb = src.getRGB(x, y);
+                    final int index = palette.getPaletteIndex(0xffffff & argb);
+                    plane0[x >>> 2] |= (index << 2 * (3 - (x & 3)));
+                }
             } else if (bitDepth == 4 && planes == 1) {
                 for (int x = 0; x < src.getWidth(); x++) {
                     final int argb = src.getRGB(x, y);
@@ -297,7 +308,7 @@ class PcxWriter {
                     plane2[x] = (byte) argb;
                 }
             }
-            
+
             for (int i = 0; i < planes; i++) {
                 rleWriter.write(bos, allPlanes[i]);
             }
@@ -307,7 +318,7 @@ class PcxWriter {
 
     private void writePixels32(final BufferedImage src, final int bytesPerLine,
             final BinaryOutputStream bos) throws IOException, ImageWriteException {
-        
+
         final int[] rgbs = new int[src.getWidth()];
         final byte[] plane = new byte[4 * bytesPerLine];
         for (int y = 0; y < src.getHeight(); y++) {

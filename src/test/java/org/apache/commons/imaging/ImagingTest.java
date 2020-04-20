@@ -17,51 +17,34 @@
 
 package org.apache.commons.imaging;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.imaging.internal.Debug;
 import org.apache.commons.imaging.test.util.FileSystemTraversal;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 
-public abstract class ImagingTest implements
-        ImagingTestConstants {
-
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
-    protected File createTempFile(final String prefix, final String suffix)
-            throws IOException {
-        return File.createTempFile(prefix, suffix, folder.newFolder());
-    }
+public abstract class ImagingTest {
 
     protected boolean isPhilHarveyTestImage(final File file) {
         return file.getAbsolutePath().startsWith(
-                PHIL_HARVEY_TEST_IMAGE_FOLDER.getAbsolutePath());
+                ImagingTestConstants.PHIL_HARVEY_TEST_IMAGE_FOLDER.getAbsolutePath());
     }
 
-    public static interface ImageFilter {
-        public boolean accept(File file) throws IOException, ImageReadException;
+    public interface ImageFilter {
+        boolean accept(File file) throws IOException, ImageReadException;
     }
 
     protected File getTestImage() throws IOException, ImageReadException {
         return getTestImage(null);
     }
 
-    protected File getTestImageByName(final String filename)
+    protected File getTestImageByName(final String fileName)
             throws IOException, ImageReadException {
-        return getTestImage(new ImageFilter() {
-            @Override
-            public boolean accept(final File file) throws IOException,
-                    ImageReadException {
-                return file.getName().equals(filename);
-            }
-        });
+        return getTestImage(file -> file.getName().equals(fileName));
     }
 
     protected File getTestImage(final ImageFilter filter) throws IOException,
@@ -85,23 +68,19 @@ public abstract class ImagingTest implements
     private static final List<File> ALL_IMAGES = new ArrayList<>();
 
     static {
-        File imagesFolder = TEST_IMAGE_FOLDER;
+        File imagesFolder = ImagingTestConstants.TEST_IMAGE_FOLDER;
 
         imagesFolder = imagesFolder.getAbsoluteFile();
 
         Debug.debug("imagesFolder", imagesFolder);
         assertTrue(imagesFolder.exists());
 
-        final FileSystemTraversal.Visitor visitor = new FileSystemTraversal.Visitor() {
-
-            @Override
-            public boolean visit(final File file, final double progressEstimate) {
-                if (!Imaging.hasImageFileExtension(file)) {
-                    return true;
-                }
-                ALL_IMAGES.add(file);
+        final FileSystemTraversal.Visitor visitor = (file, progressEstimate) -> {
+            if (!Imaging.hasImageFileExtension(file)) {
                 return true;
             }
+            ALL_IMAGES.add(file);
+            return true;
         };
         new FileSystemTraversal().traverseFiles(imagesFolder, visitor);
     }

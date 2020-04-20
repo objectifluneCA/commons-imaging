@@ -16,31 +16,61 @@
  */
 package org.apache.commons.imaging.formats.png.chunks;
 
+import static org.apache.commons.imaging.common.BinaryFunctions.findNull;
+import static org.apache.commons.imaging.common.BinaryFunctions.getStreamBytes;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.InflaterInputStream;
 
 import org.apache.commons.imaging.ImageReadException;
 
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
-
+/**
+ * The PNG iCCP chunk. If "present, the image samples conform to the color space represented by the embedded ICC
+ * profile as defined by the International Color Consortium".
+ *
+ * @see http://www.libpng.org/pub/png/spec/1.2/PNG-Chunks.html
+ */
 public class PngChunkIccp extends PngChunk {
-    // private final PngImageParser parser;
+
+    /*
+     * Logger.
+     */
+    private static final Logger LOGGER = Logger.getLogger(PngChunkIccp.class.getName());
+
+    /**
+     * ICC profile name.
+     */
     public final String profileName;
+    /**
+     * Compression method.
+     */
     public final int compressionMethod;
+    /**
+     * Compressed profile data.
+     */
     private final byte[] compressedProfile;
+    /**
+     * Uncompressed profile data.
+     */
     private final byte[] uncompressedProfile;
 
-    public byte[] getUncompressedProfile() {
-        return uncompressedProfile; // TODO clone?
-    }
-
+    /**
+     * Constructor.
+     * @param length chunk length
+     * @param chunkType chunk type
+     * @param crc CRC computed over the chunk type and chunk data (but not the length)
+     * @param bytes chunk data bytes
+     * @throws ImageReadException when no profile name is present
+     * @throws IOException when an error happens while reading the profile data
+     */
     public PngChunkIccp(
-    // PngImageParser parser,
             final int length, final int chunkType, final int crc, final byte[] bytes)
             throws ImageReadException, IOException {
         super(length, chunkType, crc, bytes);
-        // this.parser = parser;
 
         final int index = findNull(bytes);
         if (index < 0) {
@@ -48,7 +78,7 @@ public class PngChunkIccp extends PngChunk {
         }
         final byte[] nameBytes = new byte[index];
         System.arraycopy(bytes, 0, nameBytes, 0, index);
-        profileName = new String(nameBytes, "ISO-8859-1");
+        profileName = new String(nameBytes, StandardCharsets.ISO_8859_1);
 
         compressionMethod = bytes[index + 1];
 
@@ -56,19 +86,27 @@ public class PngChunkIccp extends PngChunk {
         compressedProfile = new byte[compressedProfileLength];
         System.arraycopy(bytes, index + 1 + 1, compressedProfile, 0, compressedProfileLength);
 
-        if (getDebug()) {
-            System.out.println("ProfileName: " + profileName);
-            System.out.println("ProfileName.length(): " + profileName.length());
-            System.out.println("CompressionMethod: " + compressionMethod);
-            System.out.println("CompressedProfileLength: " + compressedProfileLength);
-            System.out.println("bytes.length: " + bytes.length);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("ProfileName: " + profileName);
+            LOGGER.finest("ProfileName.length(): " + profileName.length());
+            LOGGER.finest("CompressionMethod: " + compressionMethod);
+            LOGGER.finest("CompressedProfileLength: " + compressedProfileLength);
+            LOGGER.finest("bytes.length: " + bytes.length);
         }
 
         uncompressedProfile = getStreamBytes(new InflaterInputStream(new ByteArrayInputStream(compressedProfile)));
 
-        if (getDebug()) {
-            System.out.println("UncompressedProfile: " + Integer.toString(bytes.length));
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("UncompressedProfile: " + bytes.length);
         }
+    }
+
+    /**
+     * Return a copy of the uncompressed profile data.
+     * @return the uncompressed profile data
+     */
+    public byte[] getUncompressedProfile() {
+        return uncompressedProfile.clone();
     }
 
 }

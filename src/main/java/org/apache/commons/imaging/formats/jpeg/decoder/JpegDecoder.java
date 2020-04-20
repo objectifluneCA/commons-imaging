@@ -2,9 +2,9 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,13 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.color.ColorConversions;
 import org.apache.commons.imaging.common.BinaryFileParser;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
 import org.apache.commons.imaging.formats.jpeg.JpegConstants;
@@ -36,7 +39,8 @@ import org.apache.commons.imaging.formats.jpeg.segments.DqtSegment;
 import org.apache.commons.imaging.formats.jpeg.segments.SofnSegment;
 import org.apache.commons.imaging.formats.jpeg.segments.SosSegment;
 
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
+import static org.apache.commons.imaging.common.BinaryFunctions.read2Bytes;
+import static org.apache.commons.imaging.common.BinaryFunctions.readBytes;
 
 public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
     /*
@@ -70,10 +74,20 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
     public void visitSOS(final int marker, final byte[] markerBytes, final byte[] imageData) {
         final ByteArrayInputStream is = new ByteArrayInputStream(imageData);
         try {
-            final int segmentLength = read2Bytes("segmentLength", is, "Not a Valid JPEG File", getByteOrder());
-            final byte[] sosSegmentBytes = readBytes("SosSegment",
-                    is, segmentLength - 2, "Not a Valid JPEG File");
+            // read the scan header
+            final int segmentLength = read2Bytes("segmentLength", is,"Not a Valid JPEG File", getByteOrder());
+            final byte[] sosSegmentBytes = readBytes("SosSegment", is, segmentLength - 2, "Not a Valid JPEG File");
             sosSegment = new SosSegment(marker, sosSegmentBytes);
+            // read the payload of the scan, this is the remainder of image data after the header
+            // the payload contains the entropy-encoded segments (or ECS) divided by RST markers
+            // or only one ECS if the entropy-encoded data is not divided by RST markers
+            // length of payload = length of image data - length of data already read
+            final int[] scanPayload = new int[imageData.length - segmentLength];
+            int payloadReadCount = 0;
+            while (payloadReadCount < scanPayload.length) {
+                scanPayload[payloadReadCount] = is.read();
+                payloadReadCount++;
+            }
 
             int hMax = 0;
             int vMax = 0;
@@ -86,7 +100,6 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
             final int hSize = 8 * hMax;
             final int vSize = 8 * vMax;
 
-            final JpegInputStream bitInputStream = new JpegInputStream(is);
             final int xMCUs = (sofnSegment.width + hSize - 1) / hSize;
             final int yMCUs = (sofnSegment.height + vSize - 1) / vSize;
             final Block[] mcu = allocateMCUMemory();
@@ -97,7 +110,11 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
             final int[] preds = new int[sofnSegment.numberOfComponents];
             ColorModel colorModel;
             WritableRaster raster;
-            if (sofnSegment.numberOfComponents == 3) {
+            if (sofnSegment.numberOfComponents == 4) {
+                colorModel = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
+                int bandMasks[] = new int[] { 0x00ff0000, 0x0000ff00, 0x000000ff };
+                raster = Raster.createPackedRaster(DataBuffer.TYPE_INT, sofnSegment.width, sofnSegment.height, bandMasks, null);
+            } else if (sofnSegment.numberOfComponents == 3) {
                 colorModel = new DirectColorModel(24, 0x00ff0000, 0x0000ff00,
                         0x000000ff);
                 raster = Raster.createPackedRaster(DataBuffer.TYPE_INT,
@@ -121,8 +138,21 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
             }
             final DataBuffer dataBuffer = raster.getDataBuffer();
 
+            final JpegInputStream[] bitInputStreams = splitByRstMarkers(scanPayload);
+            int bitInputStreamCount = 0;
+            JpegInputStream bitInputStream = bitInputStreams[0];
+
             for (int y1 = 0; y1 < vSize * yMCUs; y1 += vSize) {
                 for (int x1 = 0; x1 < hSize * xMCUs; x1 += hSize) {
+                    // Provide the next interval if an interval is read until it's end
+                    // as long there are unread intervals available
+                    if (!bitInputStream.hasNext()) {
+                        bitInputStreamCount++;
+                        if (bitInputStreamCount < bitInputStreams.length) {
+                            bitInputStream = bitInputStreams[bitInputStreamCount];
+                        }
+                    }
+
                     readMCU(bitInputStream, preds, mcu);
                     rescaleMCU(mcu, hSize, vSize, scaledMCU);
                     int srcRowOffset = 0;
@@ -130,7 +160,14 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
                     for (int y2 = 0; y2 < vSize && y1 + y2 < sofnSegment.height; y2++) {
                         for (int x2 = 0; x2 < hSize
                                 && x1 + x2 < sofnSegment.width; x2++) {
-                            if (scaledMCU.length == 3) {
+                            if (scaledMCU.length == 4) {
+                                final int C = scaledMCU[0].samples[srcRowOffset + x2];
+                                final int M = scaledMCU[1].samples[srcRowOffset + x2];
+                                final int Y = scaledMCU[2].samples[srcRowOffset + x2];
+                                final int K = scaledMCU[3].samples[srcRowOffset + x2];
+                                final int rgb = ColorConversions.convertCMYKtoRGB(C, M, Y, K);
+                                dataBuffer.setElem(dstRowOffset + x2, rgb);
+                            } else if (scaledMCU.length == 3) {
                                 final int Y = scaledMCU[0].samples[srcRowOffset + x2];
                                 final int Cb = scaledMCU[1].samples[srcRowOffset + x2];
                                 final int Cr = scaledMCU[2].samples[srcRowOffset + x2];
@@ -166,8 +203,7 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
             ioException = ioEx;
         } catch (final RuntimeException ex) {
             // Corrupt images can throw NPE and IOOBE
-            imageReadException = new ImageReadException("Error parsing JPEG",
-                    ex);
+            imageReadException = new ImageReadException("Error parsing JPEG",ex);
         }
     }
 
@@ -392,6 +428,75 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
         }
     }
 
+    /**
+     * Returns an array of JpegInputStream where each field contains the JpegInputStream
+     * for one interval.
+     * @param scanPayload array to read intervals from
+     * @return JpegInputStreams for all intervals, at least one stream is always provided
+     */
+    static JpegInputStream[] splitByRstMarkers(final int[] scanPayload) {
+        final List<Integer> intervalStarts = getIntervalStartPositions(scanPayload);
+        // get number of intervals in payload to init an array of appropriate length
+        final int intervalCount = intervalStarts.size();
+        JpegInputStream[] streams = new JpegInputStream[intervalCount];
+        for (int i = 0; i < intervalCount; i++) {
+            int from = intervalStarts.get(i);
+            int to;
+            if (i < intervalCount - 1) {
+                // because each restart marker needs two bytes the end of
+                // this interval is two bytes before the next interval starts
+                to = intervalStarts.get(i + 1) - 2;
+            } else { // the last interval ends with the array
+                to = scanPayload.length;
+            }
+            int[] interval = Arrays.copyOfRange(scanPayload, from, to);
+            streams[i] = new JpegInputStream(interval);
+        }
+        return streams;
+    }
+
+    /**
+     * Returns the positions of where each interval in the provided array starts. The number
+     * of start positions is also the count of intervals while the number of restart markers
+     * found is equal to the number of start positions minus one (because restart markers
+     * are between intervals).
+     *
+     * @param scanPayload array to examine
+     * @return the start positions
+     */
+    static List<Integer> getIntervalStartPositions(final int[] scanPayload) {
+        final List<Integer> intervalStarts = new ArrayList<Integer>();
+        intervalStarts.add(0);
+        boolean foundFF = false;
+        boolean foundD0toD7 = false;
+        int pos = 0;
+        while (pos < scanPayload.length) {
+            if (foundFF) {
+                // found 0xFF D0 .. 0xFF D7 => RST marker
+                if (scanPayload[pos] >= (0xff & JpegConstants.RST0_MARKER) &&
+                    scanPayload[pos] <= (0xff & JpegConstants.RST7_MARKER)) {
+                    foundD0toD7 = true;
+                } else { // found 0xFF followed by something else => no RST marker
+                    foundFF = false;
+                }
+            }
+
+            if (scanPayload[pos] == 0xFF) {
+                foundFF = true;
+            }
+
+            // true if one of the RST markers was found
+            if (foundFF && foundD0toD7) {
+                // we need to add the position after the current position because
+                // we had already read 0xFF and are now at 0xDn
+                intervalStarts.add(pos + 1);
+                foundFF = foundD0toD7 = false;
+            }
+            pos++;
+        }
+        return intervalStarts;
+    }
+
     private static int fastRound(final float x) {
         return (int) (x + 0.5f);
     }
@@ -399,7 +504,7 @@ public class JpegDecoder extends BinaryFileParser implements JpegUtils.Visitor {
     private int extend(int v, final int t) {
         // "EXTEND", section F.2.2.1, figure F.12, page 105 of T.81
         int vt = (1 << (t - 1));
-        while (v < vt) {
+        if (v < vt) {
             vt = (-1 << t) + 1;
             v += vt;
         }

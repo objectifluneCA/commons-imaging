@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.formats.bmp;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -29,44 +28,57 @@ import java.util.Map;
 import org.apache.commons.imaging.ImageInfo;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.apache.commons.imaging.ImagingTestConstants;
+import org.apache.commons.imaging.common.bytesource.ByteSourceFile;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class BmpReadTest extends BmpBaseTest {
 
-    private final File imageFile;
-
-    @Parameterized.Parameters
     public static Collection<File> data() throws Exception {
         return getBmpImages();
     }
 
-    public BmpReadTest(final File imageFile) {
-        this.imageFile = imageFile;
-    }
-
-    @Test
-    public void testImageInfo() throws ImageReadException, IOException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testImageInfo(File imageFile) throws ImageReadException, IOException {
         final Map<String, Object> params = Collections.emptyMap();
         final ImageInfo imageInfo = Imaging.getImageInfo(imageFile, params);
         assertNotNull(imageInfo);
         // TODO assert more
     }
 
-    @Ignore(value = "RoundtripTest has to be fixed befor implementation can throw UnsupportedOperationException")
-    @Test(expected = UnsupportedOperationException.class)
-    public void testMetaData() throws ImageReadException, IOException {
-        Imaging.getMetadata(imageFile);
+    @Disabled(value = "RoundtripTest has to be fixed before implementation can throw UnsupportedOperationException")
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testMetaData(File imageFile) throws ImageReadException, IOException {
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            Imaging.getMetadata(imageFile); 
+        });
     }
 
-    @Test
-    public void testBufferedImage() throws Exception {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testBufferedImage(File imageFile) throws Exception {
         final BufferedImage image = Imaging.getBufferedImage(imageFile);
         assertNotNull(image);
         // TODO assert more
     }
 
+    /**
+     * Test that when the value of the mask parameter is zero, getMaskShift won't
+     * get stuck in one of its while loops.
+     *
+     * @throws IOException
+     * @throws ImageReadException
+     */
+    @Test
+    public void testGetMaskShiftZeroMask() throws ImageReadException, IOException {
+        File inputFile = new File(ImagingTestConstants.TEST_IMAGE_FOLDER +
+                "/bmp/5/@broken/timeout-bd15dbfa26b4e88070de540c6603039e8a88626f");
+        new BmpImageParser().dumpImageFile(new ByteSourceFile(inputFile));
+    }
 }

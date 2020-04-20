@@ -37,6 +37,8 @@ public final class TiffConstants {
     public static final int TIFF_COMPRESSION_JPEG = 6;
     public static final int TIFF_COMPRESSION_UNCOMPRESSED_2 = 32771;
     public static final int TIFF_COMPRESSION_PACKBITS = 32773;
+    public static final int TIFF_COMPRESSION_DEFLATE_PKZIP = 32946;
+    public static final int TIFF_COMPRESSION_DEFLATE_ADOBE = 8;
 
     /**
      * Parameter key. Used in write operations to indicate the desired
@@ -61,8 +63,8 @@ public final class TiffConstants {
     public static final int TIFF_FLAG_T4_OPTIONS_UNCOMPRESSED_MODE = 2;
     public static final int TIFF_FLAG_T4_OPTIONS_FILL = 4;
     public static final int TIFF_FLAG_T6_OPTIONS_UNCOMPRESSED_MODE = 2;
-    
-    
+
+
     public static final String PARAM_KEY_SUBIMAGE_X = "SUBIMAGE_X";
     public static final String PARAM_KEY_SUBIMAGE_Y = "SUBIMAGE_Y";
     public static final String PARAM_KEY_SUBIMAGE_WIDTH = "SUBIMAGE_WIDTH";

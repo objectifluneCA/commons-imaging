@@ -17,9 +17,6 @@
 
 package org.apache.commons.imaging.formats.png;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
@@ -27,9 +24,12 @@ import java.util.List;
 import org.apache.commons.imaging.ImageInfo;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class PngReadTest extends PngBaseTest {
 
@@ -43,32 +43,32 @@ public class PngReadTest extends PngBaseTest {
             final File imageFile = images.get(i);
             Debug.debug("imageFile", imageFile);
             if (isInvalidPNGTestFile(imageFile)) {
-                try {
-                    Imaging.getMetadata(imageFile);
-                    fail("Image read should have failed.");
-                } catch (final Exception e) {
-                }
+                assertThrows(
+                    Exception.class,
+                    () -> Imaging.getMetadata(imageFile),
+                    "Image read should have failed."
+                );
 
-                try {
-                    Imaging.getImageInfo(imageFile);
-                    fail("Image read should have failed.");
-                } catch (final Exception e) {
-                }
+                assertThrows(
+                        Exception.class,
+                        () -> Imaging.getImageInfo(imageFile),
+                        "Image read should have failed."
+                );
 
-                try {
-                    Imaging.getBufferedImage(imageFile);
-                    fail("Image read should have failed.");
-                } catch (final Exception e) {
-                }
+                assertThrows(
+                        Exception.class,
+                        () -> Imaging.getBufferedImage(imageFile),
+                        "Image read should have failed."
+                );
             } else {
                 final ImageMetadata metadata = Imaging.getMetadata(imageFile);
-                Assert.assertFalse(metadata instanceof File); // Dummy check to avoid unused warning (it may be null)
+                Assertions.assertFalse(metadata instanceof File); // Dummy check to avoid unused warning (it may be null)
 
                 final ImageInfo imageInfo = Imaging.getImageInfo(imageFile);
                 assertNotNull(imageInfo);
 
                 Debug.debug("ICC profile", Imaging.getICCProfile(imageFile));
-                
+
                 final BufferedImage image = Imaging.getBufferedImage(imageFile);
                 assertNotNull(image);
             }

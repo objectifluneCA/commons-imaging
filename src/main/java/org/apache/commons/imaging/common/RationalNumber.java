@@ -23,7 +23,7 @@ import java.text.NumberFormat;
  */
 public class RationalNumber extends Number {
 
-    private static final long serialVersionUID = -8412262656468158691L;    
+    private static final long serialVersionUID = -8412262656468158691L;
 
     // int-precision tolerance
     private static final double TOLERANCE = 1E-8;
@@ -45,7 +45,7 @@ public class RationalNumber extends Number {
             while ((n > Integer.MAX_VALUE || n < Integer.MIN_VALUE
                     || d > Integer.MAX_VALUE || d < Integer.MIN_VALUE)
                     && (Math.abs(n) > 1) && (Math.abs(d) > 1)) {
-                // brutal, inprecise truncation =(
+                // brutal, imprecise truncation =(
                 // use the sign-preserving right shift operator.
                 n >>= 1;
                 d >>= 1;
@@ -141,6 +141,9 @@ public class RationalNumber extends Number {
 
     /**
      * Calculate rational number using successive approximations.
+     *
+     * @param value rational number double value
+     * @return the RationalNumber representation of the double value
      */
     public static RationalNumber valueOf(double value) {
         if (value >= Integer.MAX_VALUE) {

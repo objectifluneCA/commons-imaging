@@ -17,7 +17,7 @@
 
 package org.apache.commons.imaging.formats.png;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -27,8 +27,8 @@ import java.util.Map;
 
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Test;
 
 public class PngWriteForceTrueColorText extends PngBaseTest {
 
@@ -53,7 +53,7 @@ public class PngWriteForceTrueColorText extends PngBaseTest {
                         new HashMap<String, Object>());
                 assertNotNull(image);
 
-                final File outFile = createTempFile(imageFile.getName() + ".", ".gif");
+                final File outFile = File.createTempFile(imageFile.getName() + ".", ".gif");
                 // Debug.debug("outFile", outFile);
 
                 final Map<String, Object> params = new HashMap<>();

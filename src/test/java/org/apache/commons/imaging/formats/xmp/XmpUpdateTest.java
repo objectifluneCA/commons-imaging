@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.formats.xmp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -31,8 +30,8 @@ import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.ImagingTest;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Test;
 
 public class XmpUpdateTest extends ImagingTest {
 
@@ -78,7 +77,7 @@ public class XmpUpdateTest extends ImagingTest {
                 continue;
             }
 
-            final File tempFile = this.createTempFile(imageFile.getName() + ".", "."
+            final File tempFile = File.createTempFile(imageFile.getName() + ".", "."
                     + imageFormat.getExtension());
             final BufferedImage image = Imaging.getBufferedImage(imageFile);
 

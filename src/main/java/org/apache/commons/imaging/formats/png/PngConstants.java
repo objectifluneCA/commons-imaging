@@ -61,23 +61,31 @@ public final class PngConstants {
 
     /**
      * Parameter key.
-     * 
-     * Only used when writing Png images.
-     * <p>
-     * Valid values: a list of WriteTexts.
-     * <p>
+     *
+     * <p>Only used when writing Png images.</p>
+     *
+     * <p>Valid values: a list of WriteTexts.</p>
      */
     public static final String PARAM_KEY_PNG_TEXT_CHUNKS = "PNG_TEXT_CHUNKS";
 
     /**
      * Parameter key. Used in write operations to indicate the Physical Scale - sCAL.
-     * <p>
-     * Valid values: PhysicalScale
-     * <p>
+     *
+     * <p>Valid values: PhysicalScale</p>
      *
      * @see org.apache.commons.imaging.formats.png.PhysicalScale
      */
     public static final String PARAM_KEY_PHYSICAL_SCALE = "PHYSICAL_SCALE_CHUNK";
+
+    /**
+     * Parameter key. Used to indicate the PNG compression level to be used.
+     *
+     * <p>For valid values, see {@link java.util.zip.Deflater}. If no value is specified, it will use
+     * the default compression level.</p>
+     *
+     * @see java.util.zip.Deflater
+     */
+    public static final String PARAM_KEY_PNG_COMPRESSION_LEVEL = "PNG_COMPRESSION_LEVEL";
 
     private PngConstants() {
     }

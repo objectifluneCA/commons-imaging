@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 import org.apache.commons.imaging.common.BinaryFunctions;
 
@@ -31,8 +32,8 @@ public class ByteSourceInputStream extends ByteSource {
     private byte[] readBuffer;
     private long streamLength = -1;
 
-    public ByteSourceInputStream(final InputStream is, final String filename) {
-        super(filename);
+    public ByteSourceInputStream(final InputStream is, final String fileName) {
+        super(fileName);
         this.is = new BufferedInputStream(is);
     }
 
@@ -41,7 +42,7 @@ public class ByteSourceInputStream extends ByteSource {
         private CacheBlock next;
         private boolean triedNext;
 
-        public CacheBlock(final byte[] bytes) {
+        CacheBlock(final byte[] bytes) {
             this.bytes = bytes;
         }
 
@@ -91,7 +92,7 @@ public class ByteSourceInputStream extends ByteSource {
         private CacheBlock block;
         private boolean readFirst;
         private int blockIndex;
-        
+
         @Override
         public int read() throws IOException {
             if (null == block) {
@@ -119,12 +120,11 @@ public class ByteSourceInputStream extends ByteSource {
         }
 
         @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
+        public int read(final byte[] array, final int off, final int len) throws IOException {
             // first section copied verbatim from InputStream
-            if (b == null) {
-                throw new NullPointerException();
-            } else if ((off < 0) || (off > b.length) || (len < 0)
-                    || ((off + len) > b.length) || ((off + len) < 0)) {
+            Objects.requireNonNull(array, "array");
+            if ((off < 0) || (off > array.length) || (len < 0)
+                    || ((off + len) > array.length) || ((off + len) < 0)) {
                 throw new IndexOutOfBoundsException();
             } else if (len == 0) {
                 return 0;
@@ -154,11 +154,11 @@ public class ByteSourceInputStream extends ByteSource {
             }
 
             final int readSize = Math.min(len, block.bytes.length - blockIndex);
-            System.arraycopy(block.bytes, blockIndex, b, off, readSize);
+            System.arraycopy(block.bytes, blockIndex, array, off, readSize);
             blockIndex += readSize;
             return readSize;
         }
-        
+
         @Override
         public long skip(final long n) throws IOException {
 
@@ -213,7 +213,7 @@ public class ByteSourceInputStream extends ByteSource {
         // We include a separate check for int overflow.
         if ((blockStart < 0) || (blockLength < 0)
                 || (blockStart + blockLength < 0)
-                || (blockStart + blockLength > streamLength)) {
+                || (blockStart + blockLength > getLength())) {
             throw new IOException("Could not read block (block start: "
                     + blockStart + ", block length: " + blockLength
                     + ", data length: " + streamLength + ").");
@@ -266,7 +266,7 @@ public class ByteSourceInputStream extends ByteSource {
 
     @Override
     public String getDescription() {
-        return "Inputstream: '" + getFilename() + "'";
+        return "Inputstream: '" + getFileName() + "'";
     }
 
 }

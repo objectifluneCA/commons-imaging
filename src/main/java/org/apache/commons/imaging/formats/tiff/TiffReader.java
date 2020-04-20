@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +59,7 @@ public class TiffReader extends BinaryFileParser {
             return readTiffHeader(is);
         }
     }
-    
+
     private ByteOrder getTiffByteOrder(final int byteOrderByte) throws ImageReadException {
         if (byteOrderByte == 'I') {
             return ByteOrder.LITTLE_ENDIAN; // Intel
@@ -84,14 +85,10 @@ public class TiffReader extends BinaryFileParser {
             throw new ImageReadException("Unknown Tiff Version: " + tiffVersion);
         }
 
-        final long offsetToFirstIFD = 
+        final long offsetToFirstIFD =
                 0xFFFFffffL & read4Bytes("offsetToFirstIFD", is, "Not a Valid TIFF File", getByteOrder());
 
         skipBytes(is, offsetToFirstIFD - 8, "Not a Valid TIFF File: couldn't find IFDs");
-
-        if (getDebug()) {
-            System.out.println("");
-        }
 
         return new TiffHeader(byteOrder, tiffVersion, offsetToFirstIFD);
     }
@@ -162,7 +159,7 @@ public class TiffReader extends BinaryFileParser {
                     // which can cause OOM problems.
                     continue;
                 }
-                
+
                 final FieldType fieldType;
                 try {
                     fieldType = FieldType.getFieldType(type);
@@ -249,7 +246,7 @@ public class TiffReader extends BinaryFileParser {
                             subDirectoryRead = readDirectory(byteSource,
                                     subDirectoryOffset, subDirectoryType,
                                     formatCompliance, listener, true, visited);
-    
+
                         } catch (final ImageReadException imageReadException) {
                             if (strict) {
                                 throw imageReadException;
@@ -290,11 +287,11 @@ public class TiffReader extends BinaryFileParser {
         private final List<TiffField> fields = new ArrayList<>();
         private final boolean readThumbnails;
 
-        public Collector() {
+        Collector() {
             this(null);
         }
 
-        public Collector(final Map<String, Object> params) {
+        Collector(final Map<String, Object> params) {
             boolean tmpReadThumbnails = true;
             if (params != null && params.containsKey(ImagingConstants.PARAM_KEY_READ_THUMBNAILS)) {
                 tmpReadThumbnails = Boolean.TRUE.equals(params.get(ImagingConstants.PARAM_KEY_READ_THUMBNAILS));
@@ -331,14 +328,14 @@ public class TiffReader extends BinaryFileParser {
         }
 
         public TiffContents getContents() {
-            return new TiffContents(tiffHeader, directories);
+            return new TiffContents(tiffHeader, directories, fields);
         }
     }
 
     private static class FirstDirectoryCollector extends Collector {
         private final boolean readImageData;
 
-        public FirstDirectoryCollector(final boolean readImageData) {
+        FirstDirectoryCollector(final boolean readImageData) {
             this.readImageData = readImageData;
         }
 
@@ -380,7 +377,7 @@ public class TiffReader extends BinaryFileParser {
         final Collector collector = new FirstDirectoryCollector(readImageData);
         read(byteSource, params, formatCompliance, collector);
         final TiffContents contents = collector.getContents();
-        if (contents.directories.size() < 1) {
+        if (contents.directories.isEmpty()) {
             throw new ImageReadException(
                     "Image did not contain any directories.");
         }
@@ -390,10 +387,12 @@ public class TiffReader extends BinaryFileParser {
     public TiffContents readDirectories(final ByteSource byteSource,
             final boolean readImageData, final FormatCompliance formatCompliance)
             throws ImageReadException, IOException {
-        final Collector collector = new Collector(null);
+        Map<String, Object> params = Collections.singletonMap(
+          ImagingConstants.PARAM_KEY_READ_THUMBNAILS, readImageData);
+        final Collector collector = new Collector(params);
         readDirectories(byteSource, formatCompliance, collector);
         final TiffContents contents = collector.getContents();
-        if (contents.directories.size() < 1) {
+        if (contents.directories.isEmpty()) {
             throw new ImageReadException(
                     "Image did not contain any directories.");
         }
@@ -456,7 +455,7 @@ public class TiffReader extends BinaryFileParser {
                 if (imageHeight != null) {
                     rowsPerStrip = imageHeight.getIntValue();
                 }
-                
+
             }
 
             return new TiffImageData.Strips(data, rowsPerStrip);

@@ -22,10 +22,10 @@ import java.io.InputStream;
 import org.apache.commons.imaging.common.BinaryFunctions;
 
 public abstract class ByteSource {
-    private final String filename;
+    private final String fileName;
 
-    public ByteSource(final String filename) {
-        this.filename = filename;
+    public ByteSource(final String fileName) {
+        this.fileName = fileName;
     }
 
     public final InputStream getInputStream(final long start) throws IOException {
@@ -48,7 +48,7 @@ public abstract class ByteSource {
     public byte[] getBlock(final int start, final int length) throws IOException {
         return getBlock(0xFFFFffffL & start, length);
     }
-    
+
     public abstract byte[] getBlock(long start, int length) throws IOException;
 
     public abstract byte[] getAll() throws IOException;
@@ -56,12 +56,16 @@ public abstract class ByteSource {
     /**
      * This operation can be VERY expensive; for inputstream byte sources, the
      * entire stream must be drained to determine its length.
+     *
+     * @return the byte source length
+     * @throws IOException if it fails to read the byte source data
      */
     public abstract long getLength() throws IOException;
 
     public abstract String getDescription();
 
-    public final String getFilename() {
-        return filename;
+    public final String getFileName() {
+        return fileName;
     }
+
 }

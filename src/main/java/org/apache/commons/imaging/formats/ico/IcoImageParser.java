@@ -116,7 +116,7 @@ public class IcoImageParser extends ImageParser {
         public final int iconCount; // IconCount (2 bytes), number of icons in
                                     // this file.
 
-        public FileHeader(final int reserved, final int iconType, final int iconCount) {
+        FileHeader(final int reserved, final int iconType, final int iconCount) {
             this.reserved = reserved;
             this.iconType = iconType;
             this.iconCount = iconCount;
@@ -157,7 +157,7 @@ public class IcoImageParser extends ImageParser {
         public final int imageSize;
         public final int imageOffset;
 
-        public IconInfo(final byte width, final byte height,
+        IconInfo(final byte width, final byte height,
                 final byte colorCount, final byte reserved, final int planes,
                 final int bitCount, final int imageSize, final int imageOffset) {
             this.width = width;
@@ -196,7 +196,7 @@ public class IcoImageParser extends ImageParser {
         final byte reserved = readByte("Reserved", is, "Not a Valid ICO File");
         // Planes (2 bytes), always 1
         final int planes = read2Bytes("Planes", is, "Not a Valid ICO File", getByteOrder());
-        // BitCount (2 bytes), number of bits per pixel (1 for monchrome,
+        // BitCount (2 bytes), number of bits per pixel (1 for monochrome,
         // 4 for 16 colors, 8 for 256 colors, 24 for true colors,
         // 32 for true colors + alpha channel)
         final int bitCount = read2Bytes("BitCount", is, "Not a Valid ICO File", getByteOrder());
@@ -221,7 +221,7 @@ public class IcoImageParser extends ImageParser {
         public final int colorsUsed;
         public final int colorsImportant;
 
-        public BitmapHeader(final int size, final int width, final int height,
+        BitmapHeader(final int size, final int width, final int height,
                 final int planes, final int bitCount, final int compression,
                 final int sizeImage, final int pelsPerMeter,
                 final int pelsPerMeter2, final int colorsUsed,
@@ -256,10 +256,10 @@ public class IcoImageParser extends ImageParser {
         }
     }
 
-    private static abstract class IconData {
+    private abstract static class IconData {
         public final IconInfo iconInfo;
 
-        public IconData(final IconInfo iconInfo) {
+        IconData(final IconInfo iconInfo) {
             this.iconInfo = iconInfo;
         }
 
@@ -279,7 +279,7 @@ public class IcoImageParser extends ImageParser {
         public final BitmapHeader header;
         public final BufferedImage bufferedImage;
 
-        public BitmapIconData(final IconInfo iconInfo,
+        BitmapIconData(final IconInfo iconInfo,
                 final BitmapHeader header, final BufferedImage bufferedImage) {
             super(iconInfo);
             this.header = header;
@@ -302,7 +302,7 @@ public class IcoImageParser extends ImageParser {
     private static class PNGIconData extends IconData {
         public final BufferedImage bufferedImage;
 
-        public PNGIconData(final IconInfo iconInfo,
+        PNGIconData(final IconInfo iconInfo,
                 final BufferedImage bufferedImage) {
             super(iconInfo);
             this.bufferedImage = bufferedImage;
@@ -380,7 +380,7 @@ public class IcoImageParser extends ImageParser {
         final int xPelsPerMeter = read4Bytes("xPelsPerMeter", is,
                 "Not a Valid ICO File", getByteOrder()); // XPelsPerMeter (4 bytes), we don?t
                                          // use this (0)
-        final int yPelsPerMeter = read4Bytes("yPelsPerMeter", is, 
+        final int yPelsPerMeter = read4Bytes("yPelsPerMeter", is,
                 "Not a Valid ICO File", getByteOrder()); // YPelsPerMeter (4 bytes), we don?t
                                          // use this (0)
         final int colorsUsed = read4Bytes("colorsUsed", is, "Not a Valid ICO File", getByteOrder()); // ColorsUsed
@@ -437,7 +437,7 @@ public class IcoImageParser extends ImageParser {
             bos.write4Bytes(bitmapSize);
             bos.write4Bytes(0);
             bos.write4Bytes(bitmapPixelsOffset);
-    
+
             bos.write4Bytes(56);
             bos.write4Bytes(width);
             bos.write4Bytes(height / 2);
@@ -532,8 +532,7 @@ public class IcoImageParser extends ImageParser {
         public final FileHeader fileHeader;
         public final IconData[] iconDatas;
 
-        public ImageContents(final FileHeader fileHeader,
-                final IconData[] iconDatas) {
+        ImageContents(final FileHeader fileHeader, final IconData[] iconDatas) {
             super();
             this.fileHeader = fileHeader;
             this.iconDatas = iconDatas;
@@ -587,10 +586,10 @@ public class IcoImageParser extends ImageParser {
     @Override
     public List<BufferedImage> getAllBufferedImages(final ByteSource byteSource)
             throws ImageReadException, IOException {
-        final List<BufferedImage> result = new ArrayList<>();
         final ImageContents contents = readImage(byteSource);
 
         final FileHeader fileHeader = contents.fileHeader;
+        final List<BufferedImage> result = new ArrayList<>(fileHeader.iconCount);
         for (int i = 0; i < fileHeader.iconCount; i++) {
             final IconData iconData = contents.iconDatas[i];
 
@@ -630,13 +629,13 @@ public class IcoImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
             params.remove(PARAM_KEY_FORMAT);
         }
-        
+
         final PixelDensity pixelDensity = (PixelDensity) params.remove(PARAM_KEY_PIXEL_DENSITY);
 
         if (!params.isEmpty()) {
@@ -647,8 +646,10 @@ public class IcoImageParser extends ImageParser {
         final PaletteFactory paletteFactory = new PaletteFactory();
         final SimplePalette palette = paletteFactory.makeExactRgbPaletteSimple(src, 256);
         final int bitCount;
-        final boolean hasTransparency = paletteFactory.hasTransparency(src);
+        // If we can't obtain an exact rgb palette, we set the bit count to either 24 or 32
+        // so there is a relation between having a palette and the bit count.
         if (palette == null) {
+            final boolean hasTransparency = paletteFactory.hasTransparency(src);
             if (hasTransparency) {
                 bitCount = 32;
             } else {
@@ -716,15 +717,10 @@ public class IcoImageParser extends ImageParser {
             for (int i = 0; i < (1 << bitCount); i++) {
                 if (i < palette.length()) {
                     final int argb = palette.getEntry(i);
-                    bos.write(0xff & argb);
-                    bos.write(0xff & (argb >> 8));
-                    bos.write(0xff & (argb >> 16));
+                    bos.write3Bytes(argb);
                     bos.write(0);
                 } else {
-                    bos.write(0);
-                    bos.write(0);
-                    bos.write(0);
-                    bos.write(0);
+                    bos.write4Bytes(0);
                 }
             }
         }
@@ -735,30 +731,30 @@ public class IcoImageParser extends ImageParser {
         for (int y = src.getHeight() - 1; y >= 0; y--) {
             for (int x = 0; x < src.getWidth(); x++) {
                 final int argb = src.getRGB(x, y);
-                if (bitCount < 8) {
-                    final int rgb = 0xffffff & argb;
-                    final int index = palette.getPaletteIndex(rgb);
-                    bitCache <<= bitCount;
-                    bitCache |= index;
-                    bitsInCache += bitCount;
-                    if (bitsInCache >= 8) {
-                        bos.write(0xff & bitCache);
-                        bitCache = 0;
-                        bitsInCache = 0;
+                // Remember there is a relation between having a rgb palette and the bit count, see above comment
+                if (palette == null) {
+                    if (bitCount == 24) {
+                        bos.write3Bytes(argb);
+                    } else if (bitCount == 32) {
+                        bos.write4Bytes(argb);
                     }
-                } else if (bitCount == 8) {
-                    final int rgb = 0xffffff & argb;
-                    final int index = palette.getPaletteIndex(rgb);
-                    bos.write(0xff & index);
-                } else if (bitCount == 24) {
-                    bos.write(0xff & argb);
-                    bos.write(0xff & (argb >> 8));
-                    bos.write(0xff & (argb >> 16));
-                } else if (bitCount == 32) {
-                    bos.write(0xff & argb);
-                    bos.write(0xff & (argb >> 8));
-                    bos.write(0xff & (argb >> 16));
-                    bos.write(0xff & (argb >> 24));
+                } else {
+                    if (bitCount < 8) {
+                        final int rgb = 0xffffff & argb;
+                        final int index = palette.getPaletteIndex(rgb);
+                        bitCache <<= bitCount;
+                        bitCache |= index;
+                        bitsInCache += bitCount;
+                        if (bitsInCache >= 8) {
+                            bos.write(0xff & bitCache);
+                            bitCache = 0;
+                            bitsInCache = 0;
+                        }
+                    } else if (bitCount == 8) {
+                        final int rgb = 0xffffff & argb;
+                        final int index = palette.getPaletteIndex(rgb);
+                        bos.write(0xff & index);
+                    }
                 }
             }
 
@@ -803,21 +799,5 @@ public class IcoImageParser extends ImageParser {
             }
         }
         bos.close();
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
     }
 }

@@ -29,8 +29,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +41,7 @@ import org.apache.commons.imaging.ImageInfo;
 import org.apache.commons.imaging.ImageParser;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.common.XmpEmbeddable;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
 import org.apache.commons.imaging.formats.psd.dataparsers.DataParser;
 import org.apache.commons.imaging.formats.psd.dataparsers.DataParserBitmap;
@@ -53,7 +54,7 @@ import org.apache.commons.imaging.formats.psd.datareaders.CompressedDataReader;
 import org.apache.commons.imaging.formats.psd.datareaders.DataReader;
 import org.apache.commons.imaging.formats.psd.datareaders.UncompressedDataReader;
 
-public class PsdImageParser extends ImageParser {
+public class PsdImageParser extends ImageParser implements XmpEmbeddable {
     private static final String DEFAULT_EXTENSION = ".psd";
     private static final String[] ACCEPTED_EXTENSIONS = { DEFAULT_EXTENSION, };
     private static final int PSD_SECTION_HEADER = 0;
@@ -198,7 +199,7 @@ public class PsdImageParser extends ImageParser {
                     "Not a Valid PSD File");
             available -= nameLength;
             if (((nameLength + 1) % 2) != 0) {
-                //final int NameDiscard = 
+                //final int NameDiscard =
                 readByte("NameDiscard", is,
                         "Not a Valid PSD File");
                 available -= 1;
@@ -387,7 +388,7 @@ public class PsdImageParser extends ImageParser {
         final List<ImageResourceBlock> blocks = readImageResourceBlocks(byteSource,
                 new int[] { IMAGE_RESOURCE_ID_ICC_PROFILE, }, 1);
 
-        if ((blocks == null) || (blocks.size() < 1)) {
+        if ((blocks == null) || (blocks.isEmpty())) {
             return null;
         }
 
@@ -396,7 +397,7 @@ public class PsdImageParser extends ImageParser {
         if ((bytes == null) || (bytes.length < 1)) {
             return null;
         }
-        return bytes; // TODO clone?
+        return bytes.clone();
     }
 
     @Override
@@ -508,19 +509,6 @@ public class PsdImageParser extends ImageParser {
                 usesPalette, colorType, compressionAlgorithm);
     }
 
-//    // TODO not used
-//    private ImageResourceBlock findImageResourceBlock(
-//            final List<ImageResourceBlock> blocks, final int ID) {
-//        for (int i = 0; i < blocks.size(); i++) {
-//            final ImageResourceBlock block = blocks.get(i);
-//
-//            if (block.id == ID) {
-//                return block;
-//            }
-//        }
-//        return null;
-//    }
-
     @Override
     public boolean dumpImageFile(final PrintWriter pw, final ByteSource byteSource)
             throws ImageReadException, IOException {
@@ -549,7 +537,7 @@ public class PsdImageParser extends ImageParser {
             final ImageResourceBlock block = blocks.get(i);
             pw.println("\t" + i + " (" + Integer.toHexString(block.id)
                     + ", " + "'"
-                    + new String(block.nameData, "ISO-8859-1")
+                    + new String(block.nameData, StandardCharsets.ISO_8859_1)
                     + "' ("
                     + block.nameData.length
                     + "), "
@@ -660,7 +648,7 @@ public class PsdImageParser extends ImageParser {
             throw new ImageReadException("Unknown Compression: "
                     + imageContents.Compression);
         }
-        
+
         try (InputStream is = getInputStream(byteSource, PSD_SECTION_IMAGE_DATA)) {
             fDataReader.readData(is, result, imageContents, this);
 
@@ -676,7 +664,7 @@ public class PsdImageParser extends ImageParser {
     /**
      * Extracts embedded XML metadata as XML string.
      * <p>
-     * 
+     *
      * @param byteSource
      *            File containing image data.
      * @param params
@@ -701,7 +689,7 @@ public class PsdImageParser extends ImageParser {
         final List<ImageResourceBlock> blocks = readImageResourceBlocks(byteSource,
                 new int[] { IMAGE_RESOURCE_ID_XMP, }, -1);
 
-        if ((blocks == null) || (blocks.size() < 1)) {
+        if ((blocks == null) || (blocks.isEmpty())) {
             return null;
         }
 
@@ -719,7 +707,7 @@ public class PsdImageParser extends ImageParser {
             xmpBlocks.addAll(blocks);
 //        }
 
-        if (xmpBlocks.size() < 1) {
+        if (xmpBlocks.isEmpty()) {
             return null;
         }
         if (xmpBlocks.size() > 1) {
@@ -729,12 +717,8 @@ public class PsdImageParser extends ImageParser {
 
         final ImageResourceBlock block = xmpBlocks.get(0);
 
-        try {
-            // segment data is UTF-8 encoded xml.
-            return new String(block.data, 0, block.data.length, "utf-8");
-        } catch (final UnsupportedEncodingException e) {
-            throw new ImageReadException("Invalid JPEG XMP Segment.", e);
-        }
+        // segment data is UTF-8 encoded xml.
+        return new String(block.data, 0, block.data.length, StandardCharsets.UTF_8);
     }
 
 }

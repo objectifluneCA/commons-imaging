@@ -17,10 +17,10 @@
 
 package org.apache.commons.imaging.formats.jpeg.exif;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,10 +47,10 @@ import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldType;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ExifRewriteTest extends ExifBaseTest {
     // public ExifRewriteTest(String name)
@@ -77,14 +77,14 @@ public class ExifRewriteTest extends ExifBaseTest {
 
             {
                 final JpegImageMetadata metadata = (JpegImageMetadata) Imaging.getMetadata(imageFile);
-                Assert.assertNotNull(metadata);
+                Assertions.assertNotNull(metadata);
             }
 
             {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 new ExifRewriter().removeExifMetadata(byteSource, baos);
                 final byte[] bytes = baos.toByteArray();
-                final File tempFile = createTempFile("test", ".jpg");
+                final File tempFile = File.createTempFile("test", ".jpg");
                 Debug.debug("tempFile", tempFile);
                 FileUtils.writeByteArrayToFile(tempFile, bytes);
 
@@ -124,7 +124,7 @@ public class ExifRewriteTest extends ExifBaseTest {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 new ExifRewriter().removeExifMetadata(byteSource, baos);
                 final byte[] bytes = baos.toByteArray();
-                final File tempFile = createTempFile("removed", ".jpg");
+                final File tempFile = File.createTempFile("removed", ".jpg");
                 Debug.debug("tempFile", tempFile);
                 FileUtils.writeByteArrayToFile(tempFile, bytes);
 
@@ -145,7 +145,7 @@ public class ExifRewriteTest extends ExifBaseTest {
                         outputSet);
 
                 final byte[] bytes = baos.toByteArray();
-                final File tempFile = createTempFile("inserted" + "_", ".jpg");
+                final File tempFile = File.createTempFile("inserted" + "_", ".jpg");
                 Debug.debug("tempFile", tempFile);
                 FileUtils.writeByteArrayToFile(tempFile, bytes);
 
@@ -167,13 +167,13 @@ public class ExifRewriteTest extends ExifBaseTest {
     }
 
     private interface Rewriter {
-        public void rewrite(ByteSource byteSource, OutputStream os,
+        void rewrite(ByteSource byteSource, OutputStream os,
                 TiffOutputSet outputSet) throws ImageReadException,
                 IOException, ImageWriteException;
     }
 
     private void rewrite(final Rewriter rewriter, final String name) throws IOException,
-            ImageReadException, ImageWriteException {
+            ImageReadException {
         final List<File> images = getImagesWithExifData();
         for (int i = 0; i < images.size(); i++) {
 
@@ -214,7 +214,7 @@ public class ExifRewriteTest extends ExifBaseTest {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 rewriter.rewrite(byteSource, baos, outputSet);
                 final byte[] bytes = baos.toByteArray();
-                final File tempFile = createTempFile(name + "_", ".jpg");
+                final File tempFile = File.createTempFile(name + "_", ".jpg");
                 Debug.debug("tempFile", tempFile);
                 FileUtils.writeByteArrayToFile(tempFile, bytes);
 
@@ -248,30 +248,16 @@ public class ExifRewriteTest extends ExifBaseTest {
 
     @Test
     public void testRewriteLossy() throws Exception {
-        final Rewriter rewriter = new Rewriter() {
-            @Override
-            public void rewrite(final ByteSource byteSource, final OutputStream os,
-                    final TiffOutputSet outputSet) throws ImageReadException,
-                    IOException, ImageWriteException {
-                new ExifRewriter().updateExifMetadataLossy(byteSource, os,
-                        outputSet);
-            }
-        };
+        final Rewriter rewriter = (byteSource, os, outputSet) -> new ExifRewriter().updateExifMetadataLossy(byteSource, os,
+                outputSet);
 
         rewrite(rewriter, "lossy");
     }
 
     @Test
     public void testRewriteLossless() throws Exception {
-        final Rewriter rewriter = new Rewriter() {
-            @Override
-            public void rewrite(final ByteSource byteSource, final OutputStream os,
-                    final TiffOutputSet outputSet) throws ImageReadException,
-                    IOException, ImageWriteException {
-                new ExifRewriter().updateExifMetadataLossless(byteSource, os,
-                        outputSet);
-            }
-        };
+        final Rewriter rewriter = (byteSource, os, outputSet) -> new ExifRewriter().updateExifMetadataLossless(byteSource, os,
+                outputSet);
 
         rewrite(rewriter, "lossless");
     }
@@ -396,11 +382,8 @@ public class ExifRewriteTest extends ExifBaseTest {
                 if (!oldField.getTagInfo().isOffset()) {
                     if (oldField.getTagInfo().isText()) { /* do nothing */
                     } else if (oldField.isLocalValue()) {
-                        final String label = imageFile.getName() + ", dirType[" + i
-                                + "]=" + dirType + ", fieldTag[" + j + "]="
-                                + fieldTag;
                         if (oldField.getTag() == 0x116 || oldField.getTag() == 0x117) {
-                            assertEquals(label, oldField.getValue(), newField.getValue());
+                            assertEquals(oldField.getValue(), newField.getValue());
                         } else {
                             assertEquals(oldField.getBytesLength(), newField.getBytesLength());
                             assertArrayEquals(oldField.getByteArrayValue(), newField.getByteArrayValue());

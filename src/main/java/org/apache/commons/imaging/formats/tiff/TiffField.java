@@ -16,14 +16,16 @@
  */
 package org.apache.commons.imaging.formats.tiff;
 
-import java.io.OutputStreamWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.BinaryFunctions;
@@ -36,6 +38,9 @@ import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
  * A TIFF field in a TIFF directory. Immutable.
  */
 public class TiffField {
+
+    private static final Logger LOGGER = Logger.getLogger(TiffField.class.getName());
+
     private final TagInfo tagInfo;
     private final int tag;
     private final int directoryType;
@@ -61,23 +66,23 @@ public class TiffField {
 
         tagInfo = TiffTags.getTag(directoryType, tag);
     }
-    
+
     public int getDirectoryType() {
         return directoryType;
     }
-    
+
     public TagInfo getTagInfo() {
         return tagInfo;
     }
 
     /**
      * Returns the field's tag, derived from bytes 0-1.
-     * @return the tag, as an <code>int</code> in which only the lowest 2 bytes are set 
+     * @return the tag, as an {@code int} in which only the lowest 2 bytes are set
      */
     public int getTag() {
         return tag;
     }
-    
+
     /**
      * Returns the field's type, derived from bytes 2-3.
      * @return the field's type, as a {@code FieldType} object.
@@ -96,8 +101,8 @@ public class TiffField {
 
     /**
      * Returns the TIFF field's offset/value field, derived from bytes 8-11.
-     * @return the field's offset in a <code>long</code> of 4 packed bytes,
-     * or its inlined value <= 4 bytes long encoded in the field's byte order.
+     * @return the field's offset in a {@code long} of 4 packed bytes,
+     * or its inlined value &lt;= 4 bytes long encoded in the field's byte order.
      */
     public int getOffset() {
         return (int) offset;
@@ -132,7 +137,7 @@ public class TiffField {
     }
 
     /**
-     * Returns a copy of the raw value of the field. 
+     * Returns a copy of the raw value of the field.
      * @return the value of the field, in the byte order of the field.
      */
     public byte[] getByteArrayValue() {
@@ -145,11 +150,7 @@ public class TiffField {
         }
 
         @Override
-        public String getElementDescription(final boolean verbose) {
-            if (verbose) {
-                return null;
-            }
-
+        public String getElementDescription() {
             return "OversizeValueElement, tag: " + getTagInfo().name
                     + ", fieldType: " + getFieldType().getName();
         }
@@ -191,7 +192,7 @@ public class TiffField {
                 final Object object = objects[i];
 
                 if (i > 50) {
-                    result.append("... (" + objects.length + ")");
+                    result.append("... (").append(objects.length).append(")");
                     break;
                 }
                 if (i > 0) {
@@ -223,13 +224,13 @@ public class TiffField {
                 final short sval = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Short.toString(sval));
+                result.append(sval);
             }
             return result.toString();
         } else if (o instanceof int[]) {
@@ -240,13 +241,13 @@ public class TiffField {
                 final int iVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Integer.toString(iVal));
+                result.append(iVal);
             }
             return result.toString();
         } else if (o instanceof long[]) {
@@ -257,13 +258,13 @@ public class TiffField {
                 final long lVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Long.toString(lVal));
+                result.append(lVal);
             }
             return result.toString();
         } else if (o instanceof double[]) {
@@ -274,13 +275,13 @@ public class TiffField {
                 final double dVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Double.toString(dVal));
+                result.append(dVal);
             }
             return result.toString();
         } else if (o instanceof byte[]) {
@@ -291,13 +292,13 @@ public class TiffField {
                 final byte bVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Byte.toString(bVal));
+                result.append(bVal);
             }
             return result.toString();
         } else if (o instanceof char[]) {
@@ -308,13 +309,13 @@ public class TiffField {
                 final char cVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Character.toString(cVal));
+                result.append(cVal);
             }
             return result.toString();
         } else if (o instanceof float[]) {
@@ -325,13 +326,13 @@ public class TiffField {
                 final float fVal = values[i];
 
                 if (i > 50) {
-                    result.append("... (" + values.length + ")");
+                    result.append("... (").append(values.length).append(")");
                     break;
                 }
                 if (i > 0) {
                     result.append(", ");
                 }
-                result.append(Float.toString(fVal));
+                result.append(fVal);
             }
             return result.toString();
         }
@@ -355,9 +356,14 @@ public class TiffField {
     }
 
     public void dump() {
-        final PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()));
-        dump(pw);
-        pw.flush();
+        try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
+            dump(pw);
+            pw.flush();
+            sw.flush();
+            LOGGER.fine(sw.toString());
+        } catch (final IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+        }
     }
 
     public void dump(final PrintWriter pw) {
@@ -380,14 +386,18 @@ public class TiffField {
 
     @Override
     public String toString() {
-        final StringBuilder result = new StringBuilder();
-
-        result.append(getTag() + " (0x" + Integer.toHexString(getTag()) + ": "
-                + getTagInfo().name + "): ");
-        result.append(getValueDescription() + " (" + getCount() + " "
-                + getFieldType().getName() + ")");
-
-        return result.toString();
+        return getTag() +
+                " (0x" +
+                Integer.toHexString(getTag()) +
+                ": " +
+                getTagInfo().name +
+                "): " +
+                getValueDescription() +
+                " (" +
+                getCount() +
+                " " +
+                getFieldType().getName() +
+                ")";
     }
 
     public String getTagName() {

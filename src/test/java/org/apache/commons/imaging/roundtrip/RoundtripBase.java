@@ -14,35 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.roundtrip;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.common.RgbBufferedImageFactory;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
-
-import static org.junit.Assert.assertNotNull;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.params.provider.Arguments;
 
 public class RoundtripBase {
-
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
 
     protected void roundtrip(final FormatInfo formatInfo, final BufferedImage testImage,
                              final String tempPrefix, final boolean imageExact) throws IOException,
             ImageReadException, ImageWriteException {
-        final File temp1 = createTempFile(tempPrefix + ".", "."
+        final File temp1 = File.createTempFile(tempPrefix + ".", "."
                 + formatInfo.format.getExtension());
         Debug.debug("tempFile: " + temp1.getName());
 
@@ -62,7 +59,7 @@ public class RoundtripBase {
         }
 
         if (formatInfo.identicalSecondWrite) {
-            final File temp2 = createTempFile(tempPrefix + ".", "."
+            final File temp2 = File.createTempFile(tempPrefix + ".", "."
                     + formatInfo.format.getExtension());
             // Debug.debug("tempFile: " + tempFile.getName());
             Imaging.writeImage(image2, temp2, formatInfo.format, params);
@@ -71,9 +68,7 @@ public class RoundtripBase {
         }
     }
 
-    protected File createTempFile(final String prefix, final String suffix)
-            throws IOException {
-        return File.createTempFile(prefix, suffix, folder.newFolder());
+    public static Stream<Arguments> createRoundtripArguments(BufferedImage[] images) {
+        return Arrays.stream(images).flatMap(i -> Arrays.stream(FormatInfo.READ_WRITE_FORMATS).map(f -> Arguments.of(i, f)));
     }
-
 }

@@ -16,7 +16,7 @@
  */
 package org.apache.commons.imaging.formats.icns;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 enum IcnsType {
 
@@ -31,6 +31,7 @@ enum IcnsType {
     ICNS_16x16_32BIT_IMAGE("is32", 16, 16, 32, false),
 
     ICNS_32x32_8BIT_MASK("l8mk", 32, 32, 8, true),
+    ICNS_32x32_1BIT_IMAGE("ICON", 32, 32, 1, false),
     ICNS_32x32_1BIT_IMAGE_AND_MASK("ICN#", 32, 32, 1, true),
     ICNS_32x32_4BIT_IMAGE("icl4", 32, 32, 4, false),
     ICNS_32x32_8BIT_IMAGE("icl8", 32, 32, 8, false),
@@ -45,9 +46,17 @@ enum IcnsType {
     ICNS_128x128_8BIT_MASK("t8mk", 128, 128, 8, true),
     ICNS_128x128_32BIT_IMAGE("it32", 128, 128, 32, false),
 
+    ICNS_16x16_32BIT_ARGB_IMAGE("icp4", 16, 16, 32, false),
+    ICNS_32x32_32BIT_ARGB_IMAGE("icp5", 32, 32, 32, false),
+    ICNS_64x64_32BIT_ARGB_IMAGE("icp6", 64, 64, 32, false),
+    ICNS_128x128_32BIT_ARGB_IMAGE("ic07", 128, 128, 32, false),
     ICNS_256x256_32BIT_ARGB_IMAGE("ic08", 256, 256, 32, false),
-
-    ICNS_512x512_32BIT_ARGB_IMAGE("ic09", 512, 512, 32, false);
+    ICNS_512x512_32BIT_ARGB_IMAGE("ic09", 512, 512, 32, false),
+    ICNS_1024x1024_32BIT_ARGB_IMAGE("ic10", 1024, 1024, 32, false),
+    ICNS_32x32_2x_32BIT_ARGB_IMAGE("ic11", 32, 32, 32, false),
+    ICNS_64x64_2x_32BIT_ARGB_IMAGE("ic12", 64, 64, 32, false),
+    ICNS_256x256_2x_32BIT_ARGB_IMAGE("ic13", 256, 256, 32, false),
+    ICNS_512x512_2x_32BIT_ARGB_IMAGE("ic14", 512, 512, 32, false);
 
     private static final IcnsType[] ALL_IMAGE_TYPES = {
             ICNS_16x12_1BIT_IMAGE_AND_MASK,
@@ -57,6 +66,7 @@ enum IcnsType {
             ICNS_16x16_4BIT_IMAGE,
             ICNS_16x16_8BIT_IMAGE,
             ICNS_16x16_32BIT_IMAGE,
+            ICNS_32x32_1BIT_IMAGE,
             ICNS_32x32_1BIT_IMAGE_AND_MASK,
             ICNS_32x32_4BIT_IMAGE,
             ICNS_32x32_8BIT_IMAGE,
@@ -66,8 +76,17 @@ enum IcnsType {
             ICNS_48x48_8BIT_IMAGE,
             ICNS_48x48_32BIT_IMAGE,
             ICNS_128x128_32BIT_IMAGE,
+            ICNS_16x16_32BIT_ARGB_IMAGE,
+            ICNS_32x32_32BIT_ARGB_IMAGE,
+            ICNS_64x64_32BIT_ARGB_IMAGE,
+            ICNS_128x128_32BIT_ARGB_IMAGE,
             ICNS_256x256_32BIT_ARGB_IMAGE,
-            ICNS_512x512_32BIT_ARGB_IMAGE};
+            ICNS_512x512_32BIT_ARGB_IMAGE,
+            ICNS_1024x1024_32BIT_ARGB_IMAGE,
+            ICNS_32x32_2x_32BIT_ARGB_IMAGE,
+            ICNS_64x64_2x_32BIT_ARGB_IMAGE,
+            ICNS_256x256_2x_32BIT_ARGB_IMAGE,
+            ICNS_512x512_2x_32BIT_ARGB_IMAGE};
 
     private static final IcnsType[] ALL_MASK_TYPES = {
             ICNS_16x12_1BIT_IMAGE_AND_MASK,
@@ -85,7 +104,7 @@ enum IcnsType {
     private final int bitsPerPixel;
     private final boolean hasMask;
 
-    private IcnsType(final String type, final int width, final int height, final int bitsPerPixel, final boolean hasMask) {
+    IcnsType(final String type, final int width, final int height, final int bitsPerPixel, final boolean hasMask) {
         this.type = typeAsInt(type);
         this.width = width;
         this.height = height;
@@ -166,16 +185,11 @@ enum IcnsType {
     }
 
     public static int typeAsInt(final String type) {
-        byte[] bytes;
-        try {
-            bytes = type.getBytes("US-ASCII");
-        } catch (final UnsupportedEncodingException unsupportedEncodingException) {
-            throw new IllegalArgumentException("Your Java doesn't support US-ASCII", unsupportedEncodingException);
-        }
+        final byte[] bytes = type.getBytes(StandardCharsets.US_ASCII);
         if (bytes.length != 4) {
             throw new IllegalArgumentException("Invalid ICNS type");
         }
-        return ((0xff & bytes[0]) << 24) 
+        return ((0xff & bytes[0]) << 24)
              | ((0xff & bytes[1]) << 16)
              | ((0xff & bytes[2]) << 8)
              | (0xff & bytes[3]);
@@ -187,10 +201,6 @@ enum IcnsType {
         bytes[1] = (byte) (0xff & (type >> 16));
         bytes[2] = (byte) (0xff & (type >> 8));
         bytes[3] = (byte) (0xff & type);
-        try {
-            return new String(bytes, "US-ASCII");
-        } catch (final UnsupportedEncodingException unsupportedEncodingException) {
-            throw new IllegalArgumentException("Your Java doesn't support US-ASCII", unsupportedEncodingException);
-        }
+        return new String(bytes, StandardCharsets.US_ASCII);
     }
 }

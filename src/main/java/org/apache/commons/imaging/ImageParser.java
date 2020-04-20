@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.common.BinaryFileParser;
 import org.apache.commons.imaging.common.BufferedImageFactory;
@@ -57,18 +59,18 @@ import org.apache.commons.imaging.formats.xpm.XpmImageParser;
  * class providing logic for identifying and processing data in their
  * own specific format.   Specific implementations are found
  * under the com.apache.commons.imaging.formats package.
- * 
- * <h3>Application Notes</h3>
- * 
- * <h4>Format support</h4>
- * 
+ *
+ * <h2>Application Notes</h2>
+ *
+ * <h3>Format support</h3>
+ *
  * For the most recent information on format support for the
  * Apache Commons Imaging package, refer to
- * <a href="http://commons.apache.org/imaging/formatsupport.html">Format Support</a>
+ * <a href="https://commons.apache.org/imaging/formatsupport.html">Format Support</a>
  * at the main project development web site.
- * 
- * <h4>On the accuracy of this Javadoc</h4>
- * 
+ *
+ * <h3>On the accuracy of this Javadoc</h3>
+ *
  * The original authors of this class did not supply documentation.
  * The Javadoc for this class is based on inspection of the
  * source code.  In some cases, the purpose and usage for particular
@@ -76,9 +78,9 @@ import org.apache.commons.imaging.formats.xpm.XpmImageParser;
  * the intentions of the original. Therefore, you should not assume
  * that the documentation is perfect, especially in the more obscure
  * and specialized areas of implementation.
- * 
- * <h4>The "Map params" argument</h4>
- * 
+ *
+ * <h3>The "Map params" argument</h3>
+ *
  * Many of the methods specified by this class accept an argument of
  * type Map giving a list of parameters to be used when processing an
  * image. For example, some of the output formats permit the specification
@@ -91,11 +93,13 @@ import org.apache.commons.imaging.formats.xpm.XpmImageParser;
  * Therefore, a prudent programmer will always supply an valid, though
  * empty instance of a Map implementation when calling such methods.
  * Generally, the java HashMap class is useful for this purpose.
- * 
+ *
  * <p>Additionally, developers creating or enhancing classes derived
  * from ImageParser are encouraged to include such checks in their code.
  */
 public abstract class ImageParser extends BinaryFileParser {
+
+    private static final Logger LOGGER = Logger.getLogger(ImageParser.class.getName());
 
     /**
      * Gets an array of new instances of all image parsers.
@@ -135,7 +139,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @return A valid, potentially subject-matter-specific implementation of
      *         the IImageMetadata interface describing the content extracted
      *         from the source content.
-     * @throws ImageReadException In the event that the the ByteSource
+     * @throws ImageReadException In the event that the ByteSource
      *                            content does not conform to the format of the specific parser
      *                            implementation.
      * @throws IOException        In the event of unsuccessful data read operation.
@@ -149,7 +153,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * ImageParser implementations are expected to return a valid
      * IImageMetadata object or to throw an ImageReadException if unable
      * to process the specified byte source.
-     * 
+     *
      * <p>The params argument provides a mechanism for individual
      * implementations to pass optional information into the parser.
      * Not all formats will require this capability.  Because the
@@ -164,7 +168,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @return A valid, potentially subject-matter-specific implementation of
      *         the IImageMetadata interface describing the content extracted
      *         from the source content.
-     * @throws ImageReadException In the event that the the ByteSource
+     * @throws ImageReadException In the event that the ByteSource
      *                            content does not conform to the format of the specific parser
      *                            implementation.
      * @throws IOException        In the event of unsuccessful data read operation.
@@ -182,7 +186,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @return A valid, potentially subject-matter-specific implementation of
      *         the IImageMetadata interface describing the content extracted
      *         from the source content.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful data read operation.
@@ -196,7 +200,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * ImageParser implementations are expected to return a valid
      * IImageMetadata object or to throw an ImageReadException if unable
      * to process the specified data.
-     * 
+     *
      * <p>The params argument provides a mechanism for individual
      * implementations to pass optional information into the parser.
      * Not all formats will require this capability.  Because the
@@ -210,7 +214,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               must be supported by implementations).
      * @return A valid image metadata object describing the content extracted
      *         from  the specified content.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful data read operation.
@@ -229,7 +233,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param file A valid reference to a file.
      * @return A valid image metadata object describing the content extracted
      *         from  the specified content.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful file read or
@@ -244,7 +248,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * ImageParser implementations are expected to return a valid
      * IImageMetadata object or to throw an ImageReadException if unable
      * to process the specified data.
-     * 
+     *
      * <p>The params argument provides a mechanism for individual
      * implementations to pass optional information into the parser.
      * Not all formats will require this capability.  Because the
@@ -258,7 +262,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               must be supported by implementations).
      * @return A valid image metadata object describing the content extracted
      *         from  the specified content.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful file read or
@@ -266,9 +270,8 @@ public abstract class ImageParser extends BinaryFileParser {
      */
     public final ImageMetadata getMetadata(final File file, final Map<String, Object> params)
             throws ImageReadException, IOException {
-        if (getDebug()) {
-            System.out.println(getName() + ".getMetadata" + ": "
-                    + file.getName());
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest(getName() + ".getMetadata" + ": " + file.getName());
         }
 
         if (!canAcceptExtension(file)) {
@@ -283,7 +286,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * ImageParser implementations are expected to return a valid
      * ImageInfo object or to throw an ImageReadException if unable
      * to process the specified data.
-     * 
+     *
      * <p>The params argument provides a mechanism for individual
      * implementations to pass optional information into the parser.
      * Not all formats will require this capability.  Because the
@@ -297,7 +300,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *                   must be supported by implementations).
      * @return A valid image information object describing the content extracted
      *         from the specified data.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful data access operation.
@@ -314,7 +317,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param byteSource A valid ByteSource object
      * @return A valid image information object describing the content extracted
      *         from the specified data.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful data
@@ -342,7 +345,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               must be supported by implementations).
      * @return A valid image information object describing the content extracted
      *         from the specified data.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful data
@@ -371,7 +374,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               must be supported by implementations).
      * @return A valid image information object describing the content extracted
      *         from the specified data.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful file read or
@@ -438,7 +441,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param byteSource A valid instance of ByteSource.
      * @return A valid (potentially empty) list of BufferedImage objects.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -461,7 +464,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param bytes A valid byte array
      * @return A valid (potentially empty) list of BufferedImage objects.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -477,7 +480,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param file A valid reference to a file.
      * @return A valid (potentially empty) list of BufferedImage objects.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -500,7 +503,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *                   interpretation of the input data (null objects are permitted and
      *                   must be supported by implementations).
      * @return A valid instance of BufferedImage.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -518,7 +521,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               interpretation of the input data (null objects are permitted and
      *               must be supported by implementations).
      * @return A valid instance of BufferedImage.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -538,7 +541,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *               interpretation of the input data (null objects are permitted and
      *               must be supported by implementations).
      * @return A valid instance of BufferedImage.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -556,7 +559,7 @@ public abstract class ImageParser extends BinaryFileParser {
     /**
      * Writes the content of a BufferedImage to the specified output
      * stream.
-     * 
+     *
      * <p>The params argument provides a mechanism for individual
      * implementations to pass optional information into the parser.
      * Not all formats will support this capability.  Currently,
@@ -588,7 +591,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param bytes A valid byte array.
      * @return A valid instance of Dimension.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -604,7 +607,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param params Optional instructions for special-handling or
      *               interpretation of the input data.
      * @return A valid instance of Dimension.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -619,7 +622,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param file A valid reference to a file.
      * @return A valid instance of Dimension.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -635,7 +638,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param params Optional instructions for special-handling or
      *               interpretation of the input data.
      * @return A valid instance of Dimension.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -657,32 +660,12 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param params     Optional instructions for special-handling or
      *                   interpretation of the input data.
      * @return A valid instance of Dimension.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
      */
     public abstract Dimension getImageSize(ByteSource byteSource, Map<String, Object> params)
-            throws ImageReadException, IOException;
-
-    /**
-     * Get a string containing XML-formatted text conforming to the Extensible
-     * Metadata  Platform (EXP) standard for representing information about
-     * image content.  Not all image formats support EXP infomation and
-     * even for those that do, there is no guarantee that such information
-     * will be present in an image.
-     *
-     * @param byteSource A valid reference to a ByteSource.
-     * @param params     Optional instructions for special-handling or
-     *                   interpretation of the input data.
-     * @return If XMP metadata is present, a valid string;
-     *         if it is not present, a null.
-     * @throws ImageReadException In the event that the the specified content
-     *                            does not conform to the format of the specific
-     *                            parser implementation.
-     * @throws IOException        In the event of unsuccessful read or access operation.
-     */
-    public abstract String getXmpXml(ByteSource byteSource, Map<String, Object> params)
             throws ImageReadException, IOException;
 
     /**
@@ -692,7 +675,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param bytes A valid array of bytes.
      * @return If available, a valid array of bytes; otherwise, a null
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -710,7 +693,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param params Optional instructions for special-handling or
      *               interpretation of the input data.
      * @return If available, a valid array of bytes; otherwise, a null
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -727,7 +710,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param file A valid file reference.
      * @return If available, a valid array of bytes; otherwise, a null
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -745,7 +728,7 @@ public abstract class ImageParser extends BinaryFileParser {
      * @param params Optional instructions for special-handling or
      *               interpretation of the input data.
      * @return If available, a valid array of bytes; otherwise, a null
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -756,8 +739,8 @@ public abstract class ImageParser extends BinaryFileParser {
             return null;
         }
 
-        if (getDebug()) {
-            System.out.println(getName() + ": " + file.getName());
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest(getName() + ": " + file.getName());
         }
 
         return getICCProfileBytes(new ByteSourceFile(file), params);
@@ -766,13 +749,13 @@ public abstract class ImageParser extends BinaryFileParser {
     /**
      * Get an array of bytes describing the International Color Consortium (ICC)
      * specification for the color space of the image contained in the
-     * input byteSoruce. Not all formats support ICC profiles.
+     * input byteSource. Not all formats support ICC profiles.
      *
      * @param byteSource A valid ByteSource.
      * @param params     Optional instructions for special-handling or
      *                   interpretation of the input data.
      * @return If available, a valid array of bytes; otherwise, a null
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -786,7 +769,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param bytes A valid array of bytes.
      * @return A valid string.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -802,7 +785,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param file A valid file reference.
      * @return A valid string.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -812,8 +795,8 @@ public abstract class ImageParser extends BinaryFileParser {
             return null;
         }
 
-        if (getDebug()) {
-            System.out.println(getName() + ": " + file.getName());
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest(getName() + ": " + file.getName());
         }
 
         return dumpImageFile(new ByteSourceFile(file));
@@ -825,7 +808,7 @@ public abstract class ImageParser extends BinaryFileParser {
      *
      * @param byteSource A valid byte source.
      * @return A valid string.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -846,9 +829,10 @@ public abstract class ImageParser extends BinaryFileParser {
      * Write the ImageInfo and format-specific information for the image
      * content of the specified byte source to a PrintWriter
      *
+     * @param pw print writer used for writing the ImageInfo
      * @param byteSource A valid byte source.
      * @return A valid PrintWriter.
-     * @throws ImageReadException In the event that the the specified content
+     * @throws ImageReadException In the event that the specified content
      *                            does not conform to the format of the specific
      *                            parser implementation.
      * @throws IOException        In the event of unsuccessful read or access operation.
@@ -922,18 +906,18 @@ public abstract class ImageParser extends BinaryFileParser {
      * Indicates whether the ImageParser implementation can accept
      * the specified file name based on its extension.
      *
-     * @param filename An valid string giving a file name or file path.
+     * @param fileName A valid string giving a file name or file path.
      * @return If the parser can accept the format, true; otherwise, false.
      */
-    protected final boolean canAcceptExtension(final String filename) {
+    protected final boolean canAcceptExtension(final String fileName) {
         final String[] exts = getAcceptedExtensions();
         if (exts == null) {
             return true;
         }
 
-        final int index = filename.lastIndexOf('.');
+        final int index = fileName.lastIndexOf('.');
         if (index >= 0) {
-            String ext = filename.substring(index);
+            String ext = fileName.substring(index);
             ext = ext.toLowerCase(Locale.ENGLISH);
 
             for (final String ext2 : exts) {

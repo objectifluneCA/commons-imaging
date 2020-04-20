@@ -16,15 +16,20 @@
  */
 package org.apache.commons.imaging.palette;
 
+/**
+ * An RGBA (reg, green, blue, alpha) color space component enum.
+ *
+ * @since 1.0-alpha1
+ */
 enum ColorComponent {
     ALPHA(24),
     RED(16),
     GREEN(8),
     BLUE(0);
-    
+
     private final int shift;
 
-    private ColorComponent(final int shift) {
+    ColorComponent(final int shift) {
         this.shift = shift;
     }
 

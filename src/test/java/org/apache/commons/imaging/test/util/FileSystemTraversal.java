@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.test.util;
 
 import java.io.File;
 
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
 public class FileSystemTraversal {
 
@@ -29,7 +28,7 @@ public class FileSystemTraversal {
     public static final int MODE_ALL = 4;
 
     public interface Visitor {
-        public boolean visit(File file, double progressEstimate);
+        boolean visit(File file, double progressEstimate);
     }
 
     public boolean traverseFiles(final File file, final Visitor visitor) {

@@ -16,15 +16,17 @@
  */
 package org.apache.commons.imaging.formats.png.chunks;
 
+import static org.apache.commons.imaging.common.BinaryFunctions.findNull;
+import static org.apache.commons.imaging.common.BinaryFunctions.getStreamBytes;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.InflaterInputStream;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.formats.png.PngConstants;
 import org.apache.commons.imaging.formats.png.PngText;
-
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
 
 public class PngChunkZtxt extends PngTextChunk {
 
@@ -41,7 +43,7 @@ public class PngChunkZtxt extends PngTextChunk {
                     "PNG zTXt chunk keyword is unterminated.");
         }
 
-        keyword = new String(bytes, 0, index, "ISO-8859-1");
+        keyword = new String(bytes, 0, index, StandardCharsets.ISO_8859_1);
         index++;
 
         final int compressionMethod = bytes[index++];
@@ -55,7 +57,7 @@ public class PngChunkZtxt extends PngTextChunk {
         final byte[] compressedText = new byte[compressedTextLength];
         System.arraycopy(bytes, index, compressedText, 0, compressedTextLength);
 
-        text = new String(getStreamBytes(new InflaterInputStream(new ByteArrayInputStream(compressedText))), "ISO-8859-1");
+        text = new String(getStreamBytes(new InflaterInputStream(new ByteArrayInputStream(compressedText))), StandardCharsets.ISO_8859_1);
     }
 
     /**

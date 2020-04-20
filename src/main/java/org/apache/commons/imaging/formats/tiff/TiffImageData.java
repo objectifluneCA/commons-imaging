@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.imaging.formats.tiff;
 
 import java.io.IOException;
@@ -62,8 +61,8 @@ public abstract class TiffImageData {
                     predictor, samplesPerPixel, width, height, compression,
                     byteOrder, this);
         }
-        
-        /** 
+
+        /**
          * Get the width of individual tiles.  Note that if the overall
          * image width is not a multiple of the tile width, then
          * the last column of tiles may extend beyond the image width.
@@ -72,8 +71,8 @@ public abstract class TiffImageData {
         public int getTileWidth() {
             return tileWidth;
         }
-        
-        /** 
+
+        /**
          * Get the height of individual tiles.  Note that if the overall
          * image height is not a multiple of the tile height, then
          * the last row of tiles may extend beyond the image height.
@@ -148,7 +147,7 @@ public abstract class TiffImageData {
         }
 
         @Override
-        public String getElementDescription(final boolean verbose) {
+        public String getElementDescription() {
             return "Tiff image data: " + getDataLength() + " bytes";
         }
 
@@ -163,7 +162,7 @@ public abstract class TiffImageData {
         }
 
         @Override
-        public String getElementDescription(final boolean verbose) {
+        public String getElementDescription() {
             return "Tiff image data: " + getDataLength() + " bytes";
         }
 

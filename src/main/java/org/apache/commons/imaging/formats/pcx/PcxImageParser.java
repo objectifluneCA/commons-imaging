@@ -54,10 +54,10 @@ import org.apache.commons.imaging.common.bytesource.ByteSource;
 
 public class PcxImageParser extends ImageParser {
     // ZSoft's official spec is at http://www.qzx.com/pc-gpe/pcx.txt
-    // (among other places) but it's pretty thin. The fileformat.info document
-    // at http://www.fileformat.info/format/pcx/egff.htm is a little better
+    // (among other places) but it's pretty thin. The fileformat.fine document
+    // at http://www.fileformat.fine/format/pcx/egff.htm is a little better
     // but their gray sample image seems corrupt. PCX files themselves are
-    // the ultimate test but pretty hard to find nowdays, so the best
+    // the ultimate test but pretty hard to find nowadays, so the best
     // test is against other image viewers (Irfanview is pretty good).
     //
     // Open source projects are generally poor at parsing PCX,
@@ -180,7 +180,7 @@ public class PcxImageParser extends ImageParser {
         public final int vScreenSize; // vertical screen size, in pixels.
                                       // PaintBrush >= IV only.
 
-        public PcxHeader(final int manufacturer, final int version,
+        PcxHeader(final int manufacturer, final int version,
                 final int encoding, final int bitsPerPixel, final int xMin,
                 final int yMin, final int xMax, final int yMax, final int hDpi,
                 final int vDpi, final int[] colormap, final int reserved,
@@ -475,7 +475,7 @@ public class PcxImageParser extends ImageParser {
     @Override
     public final BufferedImage getBufferedImage(final ByteSource byteSource,
             Map<String, Object> params) throws ImageReadException, IOException {
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
         boolean isStrict = false;
         final Object strictness = params.get(PARAM_KEY_STRICT);
         if (strictness != null) {
@@ -493,21 +493,5 @@ public class PcxImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, final Map<String, Object> params)
             throws ImageWriteException, IOException {
         new PcxWriter(params).writeImage(src, os);
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
     }
 }

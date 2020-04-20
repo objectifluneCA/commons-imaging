@@ -17,7 +17,6 @@
 package org.apache.commons.imaging.formats.gif;
 
 import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_FORMAT;
-import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_VERBOSE;
 import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_XMP_XML;
 import static org.apache.commons.imaging.common.BinaryFunctions.compareBytes;
 import static org.apache.commons.imaging.common.BinaryFunctions.printByteBits;
@@ -33,12 +32,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.FormatCompliance;
 import org.apache.commons.imaging.ImageFormat;
@@ -50,13 +51,17 @@ import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.apache.commons.imaging.common.ImageBuilder;
 import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.common.XmpEmbeddable;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
 import org.apache.commons.imaging.common.mylzw.MyLzwCompressor;
 import org.apache.commons.imaging.common.mylzw.MyLzwDecompressor;
 import org.apache.commons.imaging.palette.Palette;
 import org.apache.commons.imaging.palette.PaletteFactory;
 
-public class GifImageParser extends ImageParser {
+public class GifImageParser extends ImageParser implements XmpEmbeddable {
+
+    private static final Logger LOGGER = Logger.getLogger(GifImageParser.class.getName());
+
     private static final String DEFAULT_EXTENSION = ".gif";
     private static final String[] ACCEPTED_EXTENSIONS = { DEFAULT_EXTENSION, };
     private static final byte[] GIF_HEADER_SIGNATURE = { 71, 73, 70 };
@@ -70,10 +75,10 @@ public class GifImageParser extends ImageParser {
     private static final int APPLICATION_EXTENSION_LABEL = 0xff;
     private static final int XMP_COMPLETE_CODE = (EXTENSION_CODE << 8)
             | XMP_EXTENSION;
-    private final static int LOCAL_COLOR_TABLE_FLAG_MASK = 1 << 7;
-    private final static int INTERLACE_FLAG_MASK = 1 << 6;
-    private final static int SORT_FLAG_MASK = 1 << 5;
-    private final static byte[] XMP_APPLICATION_ID_AND_AUTH_CODE = {
+    private static final int LOCAL_COLOR_TABLE_FLAG_MASK = 1 << 7;
+    private static final int INTERLACE_FLAG_MASK = 1 << 6;
+    private static final int SORT_FLAG_MASK = 1 << 5;
+    private static final byte[] XMP_APPLICATION_ID_AND_AUTH_CODE = {
         0x58, // X
         0x4D, // M
         0x50, // P
@@ -131,7 +136,7 @@ public class GifImageParser extends ImageParser {
             formatCompliance.compare("version", 97, version3);
         }
 
-        if (getDebug()) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             printCharQuad("identifier: ", ((identifier1 << 16)
                     | (identifier2 << 8) | (identifier3 << 0)));
             printCharQuad("version: ",
@@ -155,25 +160,25 @@ public class GifImageParser extends ImageParser {
         final byte pixelAspectRatio = readByte("Pixel Aspect Ratio", is,
                 "Not a Valid GIF File");
 
-        if (getDebug()) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             printByteBits("PackedFields bits", packedFields);
         }
 
         final boolean globalColorTableFlag = ((packedFields & 128) > 0);
-        if (getDebug()) {
-            System.out.println("GlobalColorTableFlag: " + globalColorTableFlag);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("GlobalColorTableFlag: " + globalColorTableFlag);
         }
         final byte colorResolution = (byte) ((packedFields >> 4) & 7);
-        if (getDebug()) {
-            System.out.println("ColorResolution: " + colorResolution);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("ColorResolution: " + colorResolution);
         }
         final boolean sortFlag = ((packedFields & 8) > 0);
-        if (getDebug()) {
-            System.out.println("SortFlag: " + sortFlag);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("SortFlag: " + sortFlag);
         }
         final byte sizeofGlobalColorTable = (byte) (packedFields & 7);
-        if (getDebug()) {
-            System.out.println("SizeofGlobalColorTable: "
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("SizeofGlobalColorTable: "
                     + sizeofGlobalColorTable);
         }
 
@@ -290,7 +295,7 @@ public class GifImageParser extends ImageParser {
                     if (formatCompliance != null) {
                         formatCompliance.addComment(
                                 "Unknown Application Extension ("
-                                        + new String(label, "US-ASCII") + ")",
+                                        + new String(label, StandardCharsets.US_ASCII) + ")",
                                 completeCode);
                     }
 
@@ -352,26 +357,26 @@ public class GifImageParser extends ImageParser {
             formatCompliance.checkBounds("Top Position", 0, ghi.logicalScreenHeight - imageHeight, imageTopPosition);
         }
 
-        if (getDebug()) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
             printByteBits("PackedFields bits", packedFields);
         }
 
         final boolean localColorTableFlag = (((packedFields >> 7) & 1) > 0);
-        if (getDebug()) {
-            System.out.println("LocalColorTableFlag: " + localColorTableFlag);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("LocalColorTableFlag: " + localColorTableFlag);
         }
         final boolean interlaceFlag = (((packedFields >> 6) & 1) > 0);
-        if (getDebug()) {
-            System.out.println("Interlace Flag: " + interlaceFlag);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("Interlace Flag: " + interlaceFlag);
         }
         final boolean sortFlag = (((packedFields >> 5) & 1) > 0);
-        if (getDebug()) {
-            System.out.println("Sort Flag: " + sortFlag);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("Sort Flag: " + sortFlag);
         }
 
         final byte sizeOfLocalColorTable = (byte) (packedFields & 7);
-        if (getDebug()) {
-            System.out.println("SizeofLocalColorTable: " + sizeOfLocalColorTable);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("SizeofLocalColorTable: " + sizeOfLocalColorTable);
         }
 
         byte[] localColorTable = null;
@@ -393,8 +398,8 @@ public class GifImageParser extends ImageParser {
             imageData = myLzwDecompressor.decompress(bais, size);
         } else {
             final int LZWMinimumCodeSize = is.read();
-            if (getDebug()) {
-                System.out.println("LZWMinimumCodeSize: " + LZWMinimumCodeSize);
+            if (LOGGER.isLoggable(Level.FINEST)) {
+                LOGGER.finest("LZWMinimumCodeSize: " + LZWMinimumCodeSize);
             }
 
             readGenericGIFBlock(is, -1);
@@ -433,6 +438,21 @@ public class GifImageParser extends ImageParser {
             }
         }
         return null;
+    }
+
+    /**
+     * See {@link GifImageParser#readBlocks} for reference how the blocks are created. They should match
+     * the code we are giving here, returning the correct class type. Internal only.
+     */
+    @SuppressWarnings("unchecked")
+    private <T extends GifBlock> List<T> findAllBlocks(final List<GifBlock> blocks, final int code) {
+        final List<T> filteredBlocks = new ArrayList<>();
+        for (final GifBlock gifBlock : blocks) {
+            if (gifBlock.blockCode == code) {
+                filteredBlocks.add((T) gifBlock);
+            }
+        }
+        return filteredBlocks;
     }
 
     private GifImageContents readFile(final ByteSource byteSource,
@@ -482,23 +502,59 @@ public class GifImageParser extends ImageParser {
             throw new ImageReadException("GIF: Couldn't read Header");
         }
 
-        final ImageDescriptor id = (ImageDescriptor) findBlock(blocks.blocks,
-                IMAGE_SEPARATOR);
-        if (id == null) {
-            throw new ImageReadException("GIF: Couldn't read ImageDescriptor");
-        }
-
-        // Prefer the size information in the ImageDescriptor; it is more
-        // reliable
-        // than the size information in the header.
-        return new Dimension(id.imageWidth, id.imageHeight);
+        // The logical screen width and height defines the overall dimensions of the image
+        // space from the top left corner. This does not necessarily match the dimensions
+        // of any individual image, or even the dimensions created by overlapping all
+        // images (since each images might have an offset from the top left corner).
+        // Nevertheless, these fields indicate the desired screen dimensions when rendering the GIF.
+        return new Dimension(bhi.logicalScreenWidth, bhi.logicalScreenHeight);
     }
 
-    // FIXME should throw UOE
+    // Made internal for testability.
+    static DisposalMethod createDisposalMethodFromIntValue(int value) throws ImageReadException {
+        switch (value) {
+            case 0:
+                return DisposalMethod.UNSPECIFIED;
+            case 1:
+                return DisposalMethod.DO_NOT_DISPOSE;
+            case 2:
+                return DisposalMethod.RESTORE_TO_BACKGROUND;
+            case 3:
+                return DisposalMethod.RESTORE_TO_PREVIOUS;
+            case 4:
+                return DisposalMethod.TO_BE_DEFINED_1;
+            case 5:
+                return DisposalMethod.TO_BE_DEFINED_2;
+            case 6:
+                return DisposalMethod.TO_BE_DEFINED_3;
+            case 7:
+                return DisposalMethod.TO_BE_DEFINED_4;
+            default:
+                throw new ImageReadException("GIF: Invalid parsing of disposal method");
+        }
+    }
+
     @Override
     public ImageMetadata getMetadata(final ByteSource byteSource, final Map<String, Object> params)
             throws ImageReadException, IOException {
-        return null;
+        final GifImageContents imageContents = readFile(byteSource, false);
+
+        if (imageContents == null) {
+            throw new ImageReadException("GIF: Couldn't read blocks");
+        }
+
+        final GifHeaderInfo bhi = imageContents.gifHeaderInfo;
+        if (bhi == null) {
+            throw new ImageReadException("GIF: Couldn't read Header");
+        }
+
+        final List<GifImageData> imageData = findAllImageData(imageContents);
+        List<GifImageMetadataItem> metadataItems = new ArrayList<>(imageData.size());
+        for(GifImageData id : imageData) {
+            DisposalMethod disposalMethod = createDisposalMethodFromIntValue(id.gce.dispose);
+            metadataItems.add(new GifImageMetadataItem(id.gce.delay, id.descriptor.imageLeftPosition, id.descriptor.imageTopPosition, disposalMethod));
+        }
+        return new GifImageMetadata(bhi.logicalScreenWidth, bhi.logicalScreenHeight, metadataItems);
     }
 
     private List<String> getComments(final List<GifBlock> blocks) throws IOException {
@@ -508,7 +564,7 @@ public class GifImageParser extends ImageParser {
         for (final GifBlock block : blocks) {
             if (block.blockCode == code) {
                 final byte[] bytes = ((GenericGifBlock) block).appendSubBlocks();
-                result.add(new String(bytes, "US-ASCII"));
+                result.add(new String(bytes, StandardCharsets.US_ASCII));
             }
         }
 
@@ -538,18 +594,16 @@ public class GifImageParser extends ImageParser {
         final GraphicControlExtension gce = (GraphicControlExtension) findBlock(
                 blocks.blocks, GRAPHIC_CONTROL_EXTENSION);
 
-        // Prefer the size information in the ImageDescriptor; it is more
-        // reliable than the size information in the header.
-        final int height = id.imageHeight;
-        final int width = id.imageWidth;
+        final int height = bhi.logicalScreenHeight;
+        final int width = bhi.logicalScreenWidth;
 
         final List<String> comments = getComments(blocks.blocks);
         final int bitsPerPixel = (bhi.colorResolution + 1);
         final ImageFormat format = ImageFormats.GIF;
         final String formatName = "GIF Graphics Interchange Format";
         final String mimeType = "image/gif";
-        // we ought to count images, but don't yet.
-        final int numberOfImages = -1;
+
+        final int numberOfImages = findAllBlocks(blocks.blocks, IMAGE_SEPARATOR).size();
 
         final boolean progressive = id.interlaceFlag;
 
@@ -589,7 +643,7 @@ public class GifImageParser extends ImageParser {
         }
 
         imageData.toString(pw, "");
-        
+
         final GifImageContents blocks = readFile(byteSource, false);
 
         pw.println("gif.blocks: " + blocks.blocks.size());
@@ -639,31 +693,53 @@ public class GifImageParser extends ImageParser {
         return result;
     }
 
-    @Override
-    public BufferedImage getBufferedImage(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        final GifImageContents imageContents = readFile(byteSource, false);
+    private List<GifImageData> findAllImageData(GifImageContents imageContents) throws ImageReadException {
+        final List<ImageDescriptor> descriptors = findAllBlocks(imageContents.blocks, IMAGE_SEPARATOR);
 
-        if (imageContents == null) {
-            throw new ImageReadException("GIF: Couldn't read blocks");
-        }
-
-        final GifHeaderInfo ghi = imageContents.gifHeaderInfo;
-        if (ghi == null) {
-            throw new ImageReadException("GIF: Couldn't read Header");
-        }
-
-        final ImageDescriptor id = (ImageDescriptor) findBlock(imageContents.blocks,
-                IMAGE_SEPARATOR);
-        if (id == null) {
+        if (descriptors.isEmpty()) {
             throw new ImageReadException("GIF: Couldn't read Image Descriptor");
         }
+
+        final List<GraphicControlExtension> gcExtensions = findAllBlocks(imageContents.blocks, GRAPHIC_CONTROL_EXTENSION);
+
+        if (!gcExtensions.isEmpty() && gcExtensions.size() != descriptors.size()) {
+            throw new ImageReadException("GIF: Invalid amount of Graphic Control Extensions");
+        }
+
+        List<GifImageData> imageData = new ArrayList<>(descriptors.size());
+        for(int i = 0; i < descriptors.size(); i++) {
+            final ImageDescriptor descriptor = descriptors.get(i);
+            if (descriptor == null) {
+                throw new ImageReadException(String.format("GIF: Couldn't read Image Descriptor of image number %d", i));
+            }
+
+            final GraphicControlExtension gce = gcExtensions.isEmpty() ? null : gcExtensions.get(i);
+
+            imageData.add(new GifImageData(descriptor, gce));
+        }
+
+        return imageData;
+    }
+
+    private GifImageData findFirstImageData(GifImageContents imageContents) throws ImageReadException {
+        final ImageDescriptor descriptor = (ImageDescriptor) findBlock(imageContents.blocks,
+                IMAGE_SEPARATOR);
+
+        if (descriptor == null) {
+            throw new ImageReadException("GIF: Couldn't read Image Descriptor");
+        }
+
         final GraphicControlExtension gce = (GraphicControlExtension) findBlock(
                 imageContents.blocks, GRAPHIC_CONTROL_EXTENSION);
 
-        // Prefer the size information in the ImageDescriptor; it is more
-        // reliable
-        // than the size information in the header.
+        return new GifImageData(descriptor, gce);
+    }
+
+    private BufferedImage getBufferedImage(GifHeaderInfo headerInfo, GifImageData imageData, byte[] globalColorTable)
+            throws ImageReadException {
+        final ImageDescriptor id = imageData.descriptor;
+        final GraphicControlExtension gce = imageData.gce;
+
         final int width = id.imageWidth;
         final int height = id.imageHeight;
 
@@ -677,8 +753,8 @@ public class GifImageParser extends ImageParser {
         int[] colorTable;
         if (id.localColorTable != null) {
             colorTable = getColorTable(id.localColorTable);
-        } else if (imageContents.globalColorTable != null) {
-            colorTable = getColorTable(imageContents.globalColorTable);
+        } else if (globalColorTable != null) {
+            colorTable = getColorTable(globalColorTable);
         } else {
             throw new ImageReadException("Gif: No Color Table");
         }
@@ -730,14 +806,52 @@ public class GifImageParser extends ImageParser {
                 if (transparentIndex == index) {
                     rgb = 0x00;
                 }
-
-                imageBuilder.setRGB(x, y, rgb);
+                imageBuilder.setRGB(x,y, rgb);
             }
-
         }
 
         return imageBuilder.getBufferedImage();
+    }
 
+    @Override
+    public List<BufferedImage> getAllBufferedImages(final ByteSource byteSource)
+            throws ImageReadException, IOException {
+        final GifImageContents imageContents = readFile(byteSource, false);
+
+        if (imageContents == null) {
+            throw new ImageReadException("GIF: Couldn't read blocks");
+        }
+
+        final GifHeaderInfo ghi = imageContents.gifHeaderInfo;
+        if (ghi == null) {
+            throw new ImageReadException("GIF: Couldn't read Header");
+        }
+
+        final List<GifImageData> imageData = findAllImageData(imageContents);
+        List<BufferedImage> result = new ArrayList<>(imageData.size());
+        for(GifImageData id : imageData) {
+            result.add(getBufferedImage(ghi, id, imageContents.globalColorTable));
+        }
+        return result;
+    }
+
+    @Override
+    public BufferedImage getBufferedImage(final ByteSource byteSource, final Map<String, Object> params)
+            throws ImageReadException, IOException {
+        final GifImageContents imageContents = readFile(byteSource, false);
+
+        if (imageContents == null) {
+            throw new ImageReadException("GIF: Couldn't read blocks");
+        }
+
+        final GifHeaderInfo ghi = imageContents.gifHeaderInfo;
+        if (ghi == null) {
+            throw new ImageReadException("GIF: Couldn't read Header");
+        }
+
+        final GifImageData imageData = findFirstImageData(imageContents);
+
+        return getBufferedImage(ghi, imageData, imageContents.globalColorTable);
     }
 
     private void writeAsSubBlocks(final OutputStream os, final byte[] bytes) throws IOException {
@@ -758,14 +872,9 @@ public class GifImageParser extends ImageParser {
         // make copy of params; we'll clear keys as we consume them.
         params = new HashMap<>(params);
 
-        final boolean verbose =  Boolean.TRUE.equals(params.get(PARAM_KEY_VERBOSE));
-
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
             params.remove(PARAM_KEY_FORMAT);
-        }
-        if (params.containsKey(PARAM_KEY_VERBOSE)) {
-            params.remove(PARAM_KEY_VERBOSE);
         }
 
         String xmpXml = null;
@@ -792,11 +901,11 @@ public class GifImageParser extends ImageParser {
 
         if (palette2 == null) {
             palette2 = new PaletteFactory().makeQuantizedRgbPalette(src, maxColors);
-            if (verbose) {
-                System.out.println("quantizing");
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("quantizing");
             }
-        } else if (verbose) {
-            System.out.println("exact palette");
+        } else if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("exact palette");
         }
 
         if (palette2 == null) {
@@ -870,7 +979,7 @@ public class GifImageParser extends ImageParser {
             bos.write(XMP_APPLICATION_ID_AND_AUTH_CODE.length); // 0x0B
             bos.write(XMP_APPLICATION_ID_AND_AUTH_CODE);
 
-            final byte[] xmpXmlBytes = xmpXml.getBytes("utf-8");
+            final byte[] xmpXmlBytes = xmpXml.getBytes(StandardCharsets.UTF_8);
             bos.write(xmpXmlBytes);
 
             // write "magic trailer"
@@ -993,7 +1102,7 @@ public class GifImageParser extends ImageParser {
     /**
      * Extracts embedded XML metadata as XML string.
      * <p>
-     * 
+     *
      * @param byteSource
      *            File containing image data.
      * @param params
@@ -1048,21 +1157,17 @@ public class GifImageParser extends ImageParser {
                             "XMP block in GIF missing magic trailer.");
                 }
 
-                try {
-                    // XMP is UTF-8 encoded xml.
-                    final String xml = new String(
-                            blockBytes,
-                            XMP_APPLICATION_ID_AND_AUTH_CODE.length,
-                            blockBytes.length
-                                    - (XMP_APPLICATION_ID_AND_AUTH_CODE.length + GIF_MAGIC_TRAILER.length),
-                            "utf-8");
-                    result.add(xml);
-                } catch (final UnsupportedEncodingException e) {
-                    throw new ImageReadException("Invalid XMP Block in GIF.", e);
-                }
+                // XMP is UTF-8 encoded xml.
+                final String xml = new String(
+                        blockBytes,
+                        XMP_APPLICATION_ID_AND_AUTH_CODE.length,
+                        blockBytes.length
+                                - (XMP_APPLICATION_ID_AND_AUTH_CODE.length + GIF_MAGIC_TRAILER.length),
+                                StandardCharsets.UTF_8);
+                result.add(xml);
             }
 
-            if (result.size() < 1) {
+            if (result.isEmpty()) {
                 return null;
             }
             if (result.size() > 1) {

@@ -16,7 +16,7 @@
  */
 package org.apache.commons.imaging.formats.tiff;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.formats.tiff.constants.TiffConstants;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TiffSubImageTest extends TiffBaseTest {
 
@@ -36,7 +36,7 @@ public class TiffSubImageTest extends TiffBaseTest {
     public void testSubImage() throws ImageReadException, ImageWriteException, IOException {
         final BufferedImage src = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         final byte[] imageBytes = Imaging.writeImageToBytes(src, ImageFormats.TIFF, null);
-        
+
         final Map<String, Object> params = new TreeMap<>();
         params.put(TiffConstants.PARAM_KEY_SUBIMAGE_X, 0);
         params.put(TiffConstants.PARAM_KEY_SUBIMAGE_Y, 0);

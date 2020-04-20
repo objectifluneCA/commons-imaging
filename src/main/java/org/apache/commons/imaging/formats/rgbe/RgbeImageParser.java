@@ -41,7 +41,7 @@ import org.apache.commons.imaging.common.bytesource.ByteSource;
 
 /**
  * Parser for Radiance HDR images
- * 
+ *
  * @author <a href="mailto:peter@electrotank.com">peter royal</a>
  */
 public class RgbeImageParser extends ImageParser {
@@ -126,12 +126,6 @@ public class RgbeImageParser extends ImageParser {
 
     @Override
     public byte[] getICCProfileBytes(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
-    }
-
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
             throws ImageReadException, IOException {
         return null;
     }

@@ -17,58 +17,48 @@
 package org.apache.commons.imaging;
 
 /**
- * Defines constants that may be used in passing options to 
+ * Defines constants that may be used in passing options to
  * ImageParser read/write implementations, the utility routines
  * implemented in the Imaging class, and throughout the
- * Apache Commons Imaging package.  Individual ImageParser 
+ * Apache Commons Imaging package.  Individual ImageParser
  * implementations may define their own format-specific options.
  */
 public final class ImagingConstants {
-    
-    /**
-     * Parameter key. Applies to read and write operations.
-     * <p>
-     * Valid values: Boolean.TRUE and Boolean.FALSE.
-     */
-    public static final String PARAM_KEY_VERBOSE = "VERBOSE";
 
     /**
-     * Parameter key. Used to hint the filename when reading from a byte array
-     * or InputStream. The filename hint can help disambiguate what file the
-     * image format.
-     * <p>
-     * Applies to read operations.
-     * <p>
-     * Valid values: filename as string
-     * <p>
-     * 
+     * <p>Parameter key. Used to hint the file name when reading from a byte array
+     * or InputStream. The file name hint can help disambiguate what file the
+     * image format.</p>
+     *
+     * <p>Applies to read operations.</p>
+     *
+     * <p>Valid values: file name as string</p>
+     *
      * @see java.io.InputStream
      */
     public static final String PARAM_KEY_FILENAME = "FILENAME";
 
     /**
-     * Parameter key. Used in write operations to indicate desired image format.
-     * <p>
-     * Valid values: Any format defined in ImageFormat, such as
-     * ImageFormat.IMAGE_FORMAT_PNG.
-     * <p>
-     * 
+     * <p>Parameter key. Used in write operations to indicate desired image format.</p>
+     *
+     * <p>Valid values: Any format defined in ImageFormat, such as
+     * ImageFormat.IMAGE_FORMAT_PNG.</p>
+     *
      * @see org.apache.commons.imaging.ImageFormats
      */
     public static final String PARAM_KEY_FORMAT = "FORMAT";
 
     /**
-     * Parameter key. Used in write operations to indicate desired compression
-     * algorithm.
-     * <p>
-     * Currently only applies to writing TIFF image files.
-     * <p>
-     * Valid values: TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED,
+     * <p>Parameter key. Used in write operations to indicate desired compression
+     * algorithm.</p>
+     *
+     * <p>Currently only applies to writing TIFF image files.</p>
+     *
+     * <p>Valid values: {@code TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED,
      * TiffConstants.TIFF_COMPRESSION_CCITT_1D,
      * TiffConstants.TIFF_COMPRESSION_LZW,
-     * TiffConstants.TIFF_COMPRESSION_PACKBITS.
-     * <p>
-     * 
+     * TiffConstants.TIFF_COMPRESSION_PACKBITS.}</p>
+     *
      * @see org.apache.commons.imaging.formats.tiff.constants.TiffConstants
      */
     public static final String PARAM_KEY_COMPRESSION = "COMPRESSION";
@@ -76,58 +66,53 @@ public final class ImagingConstants {
     public static final String BUFFERED_IMAGE_FACTORY = "BUFFERED_IMAGE_FACTORY";
 
     /**
-     * Parameter key. Indicates whether to read embedded thumbnails.
-     * <p>
-     * Only applies to read EXIF metadata from JPEG/JFIF files.
-     * <p>
-     * Valid values: Boolean.TRUE and Boolean.FALSE.
-     * <p>
-     * 
+     * <p>Parameter key. Indicates whether to read embedded thumbnails.</p>
+     *
+     * <p>Only applies to read EXIF metadata from JPEG/JFIF files.</p>
+     *
+     * <p>Valid values: {@code Boolean.TRUE} and {@code Boolean.FALSE}.</p>
+     *
      * @see org.apache.commons.imaging.formats.tiff.constants.TiffConstants
      */
     public static final String PARAM_KEY_READ_THUMBNAILS = "READ_THUMBNAILS";
 
     /**
-     * Parameter key. Indicates whether to throw exceptions when parsing invalid
-     * files, or whether to tolerate small problems.
-     * <p>
-     * Valid values: Boolean.TRUE and Boolean.FALSE. Default value:
-     * Boolean.FALSE.
-     * <p>
-     * 
+     * <p>Parameter key. Indicates whether to throw exceptions when parsing invalid
+     * files, or whether to tolerate small problems.</p>
+     *
+     * <p>Valid values: {@code Boolean.TRUE} and {@code Boolean.FALSE}. Default value:
+     * {@code Boolean.FALSE}.</p>
+     *
      * @see org.apache.commons.imaging.formats.tiff.constants.TiffConstants
      */
     public static final String PARAM_KEY_STRICT = "STRICT";
 
     /**
-     * Parameter key.
-     * 
-     * Only used when writing images.
-     * <p>
-     * Valid values: TiffOutputSet to write into the image's EXIF metadata.
-     * <p>
-     * 
+     * <p>Parameter key.</p>
+     *
+     * <p>Only used when writing images.</p>
+     *
+     * <p>Valid values: TiffOutputSet to write into the image's EXIF metadata.</p>
+     *
      * @see org.apache.commons.imaging.formats.tiff.write.TiffOutputSet
      */
     public static final String PARAM_KEY_EXIF = "EXIF";
 
     /**
-     * Parameter key.
-     * 
-     * Only used when writing images.
-     * <p>
-     * Valid values: String of XMP XML.
-     * <p>
+     * <p>Parameter key.</p>
+     *
+     * <p>Only used when writing images.</p>
+     *
+     * <p>Valid values: String of XMP XML.</p>
      */
     public static final String PARAM_KEY_XMP_XML = "XMP_XML";
 
     /**
-     * Parameter key. Used in write operations to indicate the desired pixel
-     * density (DPI), and/or aspect ratio.
-     * <p>
-     * Valid values: PixelDensity
-     * <p>
-     * 
+     * <p>Parameter key. Used in write operations to indicate the desired pixel
+     * density (DPI), and/or aspect ratio.</p>
+     *
+     * <p>Valid values: PixelDensity</p>
+     *
      * @see org.apache.commons.imaging.PixelDensity
      */
     public static final String PARAM_KEY_PIXEL_DENSITY = "PIXEL_DENSITY";

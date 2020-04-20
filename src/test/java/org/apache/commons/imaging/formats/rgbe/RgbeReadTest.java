@@ -16,19 +16,23 @@
  */
 package org.apache.commons.imaging.formats.rgbe;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.imaging.ImageInfo;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
+import org.apache.commons.imaging.common.bytesource.ByteSourceFile;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class RgbeReadTest extends RgbeBaseTest {
 
@@ -51,5 +55,24 @@ public class RgbeReadTest extends RgbeBaseTest {
             final BufferedImage image = Imaging.getBufferedImage(imageFile);
             assertNotNull(image);
         }
+    }
+
+    /**
+     * Test that a bad file does not gets the RgbeImageParser stuck reading it.
+     *
+     * @throws ImageReadException
+     * @throws IOException
+     */
+    @Test
+    public void testErrorDecompressingInvalidFile() throws ImageReadException, IOException {
+        // From IMAGING-219
+        final File inputFile = new File(
+                RgbeReadTest.class.getResource("/IMAGING-219/timeout-9713502c9c371f1654b493650c16ab17c0444369")
+                        .getFile());
+        final ByteSourceFile byteSourceFile = new ByteSourceFile(inputFile);
+        final Map<String, Object> params = Collections.emptyMap();
+        Assertions.assertThrows(ImageReadException.class, () -> {
+            new RgbeImageParser().getBufferedImage(byteSourceFile, params);
+        });
     }
 }

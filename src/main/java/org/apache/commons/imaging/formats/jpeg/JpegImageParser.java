@@ -16,12 +16,16 @@
  */
 package org.apache.commons.imaging.formats.jpeg;
 
+import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_READ_THUMBNAILS;
+import static org.apache.commons.imaging.common.BinaryFunctions.remainingBytes;
+import static org.apache.commons.imaging.common.BinaryFunctions.startsWith;
+
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +33,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageFormat;
 import org.apache.commons.imaging.ImageFormats;
@@ -36,6 +42,7 @@ import org.apache.commons.imaging.ImageInfo;
 import org.apache.commons.imaging.ImageParser;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.common.XmpEmbeddable;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
 import org.apache.commons.imaging.formats.jpeg.decoder.JpegDecoder;
 import org.apache.commons.imaging.formats.jpeg.iptc.IptcParser;
@@ -55,18 +62,17 @@ import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffImageParser;
 import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
-import static org.apache.commons.imaging.ImagingConstants.*;
-import static org.apache.commons.imaging.common.BinaryFunctions.*;
+public class JpegImageParser extends ImageParser implements XmpEmbeddable {
 
-public class JpegImageParser extends ImageParser {
+    private static final Logger LOGGER = Logger.getLogger(JpegImageParser.class.getName());
+
     private static final String DEFAULT_EXTENSION = ".jpg";
     private static final String[] ACCEPTED_EXTENSIONS = { ".jpg", ".jpeg", };
-    
+
     public JpegImageParser() {
         setByteOrder(ByteOrder.BIG_ENDIAN);
-        // setDebug(true);
     }
 
     @Override
@@ -298,12 +304,8 @@ public class JpegImageParser extends ImageParser {
 
         final byte[] bytes = assembleSegments(filtered);
 
-        if (getDebug()) {
-            System.out.println("bytes" + ": " + bytes.length);
-        }
-
-        if (getDebug()) {
-            System.out.println("");
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("bytes" + ": " + bytes.length);
         }
 
         return bytes;
@@ -369,9 +371,8 @@ public class JpegImageParser extends ImageParser {
         }
 
         final List<Segment> exifSegments = filterAPP1Segments(segments);
-        if (getDebug()) {
-            System.out.println("exif_segments.size" + ": "
-                    + exifSegments.size());
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("exif_segments.size" + ": " + exifSegments.size());
         }
 
         // Debug.debug("segments", segments);
@@ -525,7 +526,7 @@ public class JpegImageParser extends ImageParser {
     /**
      * Extracts embedded XML metadata as XML string.
      * <p>
-     * 
+     *
      * @param byteSource
      *            File containing image data.
      * @param params
@@ -597,12 +598,12 @@ public class JpegImageParser extends ImageParser {
             final App13Segment segment = (App13Segment) s;
 
             final PhotoshopApp13Data data = segment.parsePhotoshopSegment(params);
-            if (data != null && photoshopApp13Data != null) {
-                throw new ImageReadException(
-                        "Jpeg contains more than one Photoshop App13 segment.");
+            if (data != null) {
+                if (photoshopApp13Data != null) {
+                    throw new ImageReadException("Jpeg contains more than one Photoshop App13 segment.");
+                }
+                photoshopApp13Data = data;
             }
-
-            photoshopApp13Data = data;
         }
 
         if (null == photoshopApp13Data) {
@@ -702,7 +703,7 @@ public class JpegImageParser extends ImageParser {
         if (app14Segments != null && !app14Segments.isEmpty()) {
             app14Segment = (App14Segment) app14Segments.get(0);
         }
-        
+
         // JfifSegment fTheJFIFSegment = (JfifSegment) findSegment(segments,
         // kJFIFMarker);
 
@@ -790,16 +791,13 @@ public class JpegImageParser extends ImageParser {
             physicalHeightInch = (float) (height / (yDensity * unitsPerInch));
         }
 
-        final List<String> comments = new ArrayList<>();
         final List<Segment> commentSegments = readSegments(byteSource,
                 new int[] { JpegConstants.COM_MARKER}, false);
+        final List<String> comments = new ArrayList<>(commentSegments.size());
         for (final Segment commentSegment : commentSegments) {
             final ComSegment comSegment = (ComSegment) commentSegment;
             String comment = "";
-            try {
-                comment = new String(comSegment.getComment(), "UTF-8");
-            } catch (final UnsupportedEncodingException cannotHappen) { // NOPMD - can't happen
-            }
+            comment = new String(comSegment.getComment(), StandardCharsets.UTF_8);
             comments.add(comment);
         }
 
@@ -817,14 +815,14 @@ public class JpegImageParser extends ImageParser {
 
         boolean transparent = false;
         final boolean usesPalette = false; // TODO: inaccurate.
-        
+
         // See http://docs.oracle.com/javase/6/docs/api/javax/imageio/metadata/doc-files/jpeg_metadata.html#color
         ImageInfo.ColorType colorType = ImageInfo.ColorType.UNKNOWN;
         // Some images have both JFIF/APP0 and APP14.
         // JFIF is meant to win but in them APP14 is clearly right, so make it win.
         if (app14Segment != null && app14Segment.isAdobeJpegSegment()) {
             final int colorTransform = app14Segment.getAdobeColorTransform();
-            if (colorTransform == App14Segment.ADOBE_COLOR_TRANSFORM_UNKNOWN) { 
+            if (colorTransform == App14Segment.ADOBE_COLOR_TRANSFORM_UNKNOWN) {
                 if (numberOfComponents == 3) {
                     colorType = ImageInfo.ColorType.RGB;
                 } else if (numberOfComponents == 4) {
@@ -927,7 +925,7 @@ public class JpegImageParser extends ImageParser {
                                 maxVerticalSamplingFactor = component.verticalSamplingFactor;
                             }
                         }
-                        final boolean isSubsampled = (minHorizontalSamplingFactor != maxHorizontalSmaplingFactor) 
+                        final boolean isSubsampled = (minHorizontalSamplingFactor != maxHorizontalSmaplingFactor)
                                 || (minVerticalSamplingFactor != maxVerticalSamplingFactor);
                         if (numberOfComponents == 3) {
                             if (isSubsampled) {
@@ -955,175 +953,6 @@ public class JpegImageParser extends ImageParser {
                 physicalWidthInch, width, progressive, transparent,
                 usesPalette, colorType, compressionAlgorithm);
     }
-
-    // public ImageInfo getImageInfo(ByteSource byteSource, Map params)
-    // throws ImageReadException, IOException
-    // {
-    //
-    // List allSegments = readSegments(byteSource, null, false);
-    //
-    // final int SOF_MARKERS[] = new int[]{
-    // SOF0_MARKER, SOF1_MARKER, SOF2_MARKER, SOF3_MARKER, SOF5_MARKER,
-    // SOF6_MARKER, SOF7_MARKER, SOF9_MARKER, SOF10_MARKER, SOF11_MARKER,
-    // SOF13_MARKER, SOF14_MARKER, SOF15_MARKER,
-    // };
-    //
-    // List sofMarkers = new ArrayList();
-    // for(int i=0;i<SOF_MARKERS.length;i++)
-    // sofMarkers.add(new Integer(SOF_MARKERS[i]));
-    // List SOFSegments = filterSegments(allSegments, sofMarkers);
-    // if (SOFSegments == null || SOFSegments.size()<1)
-    // throw new ImageReadException("No SOFN Data Found.");
-    //
-    // List jfifMarkers = new ArrayList();
-    // jfifMarkers.add(new Integer(JFIF_MARKER));
-    // List jfifSegments = filterSegments(allSegments, jfifMarkers);
-    //
-    // SofnSegment firstSOFNSegment = (SofnSegment) SOFSegments.get(0);
-    //
-    // int Width = firstSOFNSegment.width;
-    // int Height = firstSOFNSegment.height;
-    //
-    // JfifSegment jfifSegment = null;
-    //
-    // if (jfifSegments != null && jfifSegments.size() > 0)
-    // jfifSegment = (JfifSegment) jfifSegments.get(0);
-    //
-    // double x_density = -1.0;
-    // double y_density = -1.0;
-    // double units_per_inch = -1.0;
-    // // int JFIF_major_version;
-    // // int JFIF_minor_version;
-    // String FormatDetails;
-    //
-    // if (jfifSegment != null)
-    // {
-    // x_density = jfifSegment.xDensity;
-    // y_density = jfifSegment.yDensity;
-    // int density_units = jfifSegment.densityUnits;
-    // // JFIF_major_version = fTheJFIFSegment.JFIF_major_version;
-    // // JFIF_minor_version = fTheJFIFSegment.JFIF_minor_version;
-    //
-    // FormatDetails = "Jpeg/JFIF v." + jfifSegment.jfifMajorVersion
-    // + "." + jfifSegment.jfifMinorVersion;
-    //
-    // switch (density_units)
-    // {
-    // case 0 :
-    // break;
-    // case 1 : // inches
-    // units_per_inch = 1.0;
-    // break;
-    // case 2 : // cms
-    // units_per_inch = 2.54;
-    // break;
-    // default :
-    // break;
-    // }
-    // }
-    // else
-    // {
-    // JpegImageMetadata metadata = (JpegImageMetadata) getMetadata(byteSource,
-    // params);
-    //
-    // {
-    // TiffField field = metadata
-    // .findEXIFValue(TiffField.TIFF_TAG_XRESOLUTION);
-    // if (field == null)
-    // throw new ImageReadException("No XResolution");
-    //
-    // x_density = ((Number) field.getValue()).doubleValue();
-    // }
-    // {
-    // TiffField field = metadata
-    // .findEXIFValue(TiffField.TIFF_TAG_YRESOLUTION);
-    // if (field == null)
-    // throw new ImageReadException("No YResolution");
-    //
-    // y_density = ((Number) field.getValue()).doubleValue();
-    // }
-    // {
-    // TiffField field = metadata
-    // .findEXIFValue(TiffField.TIFF_TAG_RESOLUTION_UNIT);
-    // if (field == null)
-    // throw new ImageReadException("No ResolutionUnits");
-    //
-    // int density_units = ((Number) field.getValue()).intValue();
-    //
-    // switch (density_units)
-    // {
-    // case 1 :
-    // break;
-    // case 2 : // inches
-    // units_per_inch = 1.0;
-    // break;
-    // case 3 : // cms
-    // units_per_inch = 2.54;
-    // break;
-    // default :
-    // break;
-    // }
-    //
-    // }
-    //
-    // FormatDetails = "Jpeg/DCM";
-    //
-    // }
-    //
-    // int PhysicalHeightDpi = -1;
-    // float PhysicalHeightInch = -1;
-    // int PhysicalWidthDpi = -1;
-    // float PhysicalWidthInch = -1;
-    //
-    // if (units_per_inch > 0)
-    // {
-    // PhysicalWidthDpi = (int) Math.round((double) x_density
-    // / units_per_inch);
-    // PhysicalWidthInch = (float) ((double) Width / (x_density *
-    // units_per_inch));
-    // PhysicalHeightDpi = (int) Math.round((double) y_density
-    // * units_per_inch);
-    // PhysicalHeightInch = (float) ((double) Height / (y_density *
-    // units_per_inch));
-    // }
-    //
-    // List Comments = new ArrayList();
-    // // TODO: comments...
-    //
-    // int Number_of_components = firstSOFNSegment.numberOfComponents;
-    // int Precision = firstSOFNSegment.precision;
-    //
-    // int BitsPerPixel = Number_of_components * Precision;
-    // ImageFormat Format = ImageFormat.IMAGE_FORMAT_JPEG;
-    // String FormatName = "JPEG (Joint Photographic Experts Group) Format";
-    // String MimeType = "image/jpeg";
-    // // we ought to count images, but don't yet.
-    // int NumberOfImages = -1;
-    // // not accurate ... only reflects first
-    // boolean progressive = firstSOFNSegment.marker == SOF2_MARKER;
-    //
-    // boolean transparent = false; // TODO: inaccurate.
-    // boolean usesPalette = false; // TODO: inaccurate.
-    // int ColorType;
-    // if (Number_of_components == 1)
-    // ColorType = ImageInfo.ColorType.BW;
-    // else if (Number_of_components == 3)
-    // ColorType = ImageInfo.ColorType.RGB;
-    // else if (Number_of_components == 4)
-    // ColorType = ImageInfo.ColorType.CMYK;
-    // else
-    // ColorType = ImageInfo.ColorType.UNKNOWN;
-    //
-    // String compressionAlgorithm = ImageInfo.COMPRESSION_ALGORITHM_JPEG;
-    //
-    // ImageInfo result = new ImageInfo(FormatDetails, BitsPerPixel, Comments,
-    // Format, FormatName, Height, MimeType, NumberOfImages,
-    // PhysicalHeightDpi, PhysicalHeightInch, PhysicalWidthDpi,
-    // PhysicalWidthInch, Width, progressive, transparent,
-    // usesPalette, ColorType, compressionAlgorithm);
-    //
-    // return result;
-    // }
 
     @Override
     public boolean dumpImageFile(final PrintWriter pw, final ByteSource byteSource)

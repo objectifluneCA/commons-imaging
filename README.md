@@ -25,7 +25,7 @@
  | commons-build-plugin/trunk/src/main/resources/commons-xdoc-templates |
  +======================================================================+
  |                                                                      |
- | 1) Re-generate using: mvn commons:readme-md                          |
+ | 1) Re-generate using: mvn commons-build:readme-md                    |
  |                                                                      |
  | 2) Set the following properties in the component's pom:              |
  |    - commons.componentid (required, alphabetic, lower case)          |
@@ -43,64 +43,38 @@
 Apache Commons Imaging
 ===================
 
-[![Build Status](https://travis-ci.org/apache/commons-imaging.svg?branch=trunk)](https://travis-ci.org/apache/commons-imaging)
-[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Build Status](https://travis-ci.org/apache/commons-imaging.svg)](https://travis-ci.org/apache/commons-imaging)
+[![Coverage Status](https://coveralls.io/repos/apache/commons-imaging/badge.svg)](https://coveralls.io/r/apache/commons-imaging)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-imaging/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-imaging/)
+[![Javadocs](https://javadoc.io/badge/org.apache.commons/commons-imaging/1.0-alpha1.svg)](https://javadoc.io/doc/org.apache.commons/commons-imaging/1.0-alpha1)
 
 Apache Commons Imaging (previously Sanselan) is a pure-Java image library.
 
 Documentation
 -------------
 
-More information can be found on the [homepage](https://commons.apache.org/proper/commons-imaging).
-The [JavaDoc](https://commons.apache.org/proper/commons-imaging/javadocs/api-release) can be browsed.
+More information can be found on the [Apache Commons Imaging homepage](https://commons.apache.org/proper/commons-imaging).
+The [Javadoc](https://commons.apache.org/proper/commons-imaging/apidocs) can be browsed.
 Questions related to the usage of Apache Commons Imaging should be posted to the [user mailing list][ml].
 
 Where can I get the latest release?
 -----------------------------------
-There is currently no stable release of Imaging. However you can pull the latest SNAPSHOT from the Apache snapshot repository by adding the snapshot repository to your pom.xml:
- 
-```xml
-<repository>
-  <id>apache.snapshots</id>
-  <name>Apache Development Snapshot Repository</name>
-  <url>https://repository.apache.org/content/repositories/snapshots/</url>
-  <releases>
-    <enabled>false</enabled>
-  </releases>
-  <snapshots>
-    <enabled>true</enabled>
-  </snapshots>
-</repository> 
-```
+You can download source and binaries from our [download page](https://commons.apache.org/proper/commons-imaging/download_imaging.cgi).
 
-Then you can use the SNAPSHOT version of Commons Imaging in your pom.xml:
+Alternatively you can pull it from the central Maven repositories:
 
 ```xml
 <dependency>
   <groupId>org.apache.commons</groupId>
   <artifactId>commons-imaging</artifactId>
-  <version>1.0-SNAPSHOT</version>
-</dependency>
-``` 
-
-The last stable release of Sanselan, before it was renamed to Imaging, was 0.97. You may:
-+ Download source and binaries from our [download page](https://commons.apache.org/proper/commons-imaging/download_sanselan.cgi).
-+ Pull it from the central Maven repositories:
-
-```xml
-<dependency>
-  <groupId>org.apache.commons</groupId>
-  <artifactId>commons-sanselan</artifactId>
-  <version>0.97</version>
+  <version>1.0-alpha1</version>
 </dependency>
 ```
-
-Note that Commons Imaging and Commons Sanselan are neither binary nor source compatible.
 
 Contributing
 ------------
 
-We accept PRs via github. The [developer mailing list][ml] is the main channel of communication for contributors.
+We accept Pull Requests via GitHub. The [developer mailing list][ml] is the main channel of communication for contributors.
 There are some guidelines which will make applying PRs easier for us:
 + No tabs! Please use spaces for indentation.
 + Respect the code style.
@@ -112,7 +86,9 @@ You can learn more about contributing via GitHub in our [contribution guidelines
 
 License
 -------
-Code is under the [Apache Licence v2](https://www.apache.org/licenses/LICENSE-2.0.txt).
+This code is under the [Apache Licence v2](https://www.apache.org/licenses/LICENSE-2.0).
+
+See the `NOTICE.txt` file for required notices and attributions.
 
 Donations
 ---------
@@ -122,8 +98,8 @@ Additional Resources
 --------------------
 
 + [Apache Commons Homepage](https://commons.apache.org/)
-+ [Apache Bugtracker (JIRA)](https://issues.apache.org/jira/)
++ [Apache Issue Tracker (JIRA)](https://issues.apache.org/jira/browse/IMAGING)
 + [Apache Commons Twitter Account](https://twitter.com/ApacheCommons)
-+ #apachecommons IRC channel on freenode.org
++ `#apache-commons` IRC channel on `irc.freenode.org`
 
 [ml]:https://commons.apache.org/mail-lists.html

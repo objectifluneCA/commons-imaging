@@ -20,30 +20,21 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.PixelDensity;
+import org.apache.commons.imaging.internal.Debug;
 import org.apache.commons.imaging.palette.Palette;
 import org.apache.commons.imaging.palette.PaletteFactory;
-import org.apache.commons.imaging.palette.SimplePalette;
-import org.apache.commons.imaging.util.Debug;
 
 class PngWriter {
-    private final boolean verbose;
-
-    public PngWriter(final boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    public PngWriter(final Map<String, Object> params) {
-        this.verbose =  params != null && Boolean.TRUE.equals(params.get(ImagingConstants.PARAM_KEY_VERBOSE));
-    }
 
     /*
      1. IHDR: image header, which is the first chunk in a PNG datastream.
@@ -59,7 +50,7 @@ class PngWriter {
      4. Miscellaneous information: bKGD, hIST, pHYs, sPLT (see 11.3.5: Miscellaneous information).
      5. Time information: tIME (see 11.3.6: Time stamp information).
     */
-    
+
     private void writeInt(final OutputStream os, final int value) throws IOException {
         os.write(0xff & (value >> 24));
         os.write(0xff & (value >> 16));
@@ -95,7 +86,7 @@ class PngWriter {
         public final byte filterMethod;
         public final InterlaceMethod interlaceMethod;
 
-        public ImageHeader(final int width, final int height, final byte bitDepth,
+        ImageHeader(final int width, final int height, final byte bitDepth,
                 final PngColorType pngColorType, final byte compressionMethod, final byte filterMethod,
                 final InterlaceMethod interlaceMethod) {
             this.width = width;
@@ -134,26 +125,26 @@ class PngWriter {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // keyword
-        baos.write(text.keyword.getBytes("ISO-8859-1"));
+        baos.write(text.keyword.getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
         baos.write(1); // compressed flag, true
         baos.write(PngConstants.COMPRESSION_DEFLATE_INFLATE); // compression method
 
         // language tag
-        baos.write(text.languageTag.getBytes("ISO-8859-1"));
+        baos.write(text.languageTag.getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
         // translated keyword
-        baos.write(text.translatedKeyword.getBytes("utf-8"));
+        baos.write(text.translatedKeyword.getBytes(StandardCharsets.UTF_8));
         baos.write(0);
 
-        baos.write(deflate(text.text.getBytes("utf-8")));
+        baos.write(deflate(text.text.getBytes(StandardCharsets.UTF_8)));
 
         writeChunk(os, ChunkType.iTXt, baos.toByteArray());
     }
 
-    private void writeChunkzTXt(final OutputStream os, final PngText.Ztxt text) 
+    private void writeChunkzTXt(final OutputStream os, final PngText.Ztxt text)
             throws IOException, ImageWriteException {
         if (!isValidISO_8859_1(text.keyword)) {
             throw new ImageWriteException("Png zTXt chunk keyword is not ISO-8859-1: " + text.keyword);
@@ -165,14 +156,14 @@ class PngWriter {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // keyword
-        baos.write(text.keyword.getBytes("ISO-8859-1"));
+        baos.write(text.keyword.getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
         // compression method
         baos.write(PngConstants.COMPRESSION_DEFLATE_INFLATE);
 
         // text
-        baos.write(deflate(text.text.getBytes("ISO-8859-1")));
+        baos.write(deflate(text.text.getBytes(StandardCharsets.ISO_8859_1)));
 
         writeChunk(os, ChunkType.zTXt, baos.toByteArray());
     }
@@ -189,11 +180,11 @@ class PngWriter {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // keyword
-        baos.write(text.keyword.getBytes("ISO-8859-1"));
+        baos.write(text.keyword.getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
         // text
-        baos.write(text.text.getBytes("ISO-8859-1"));
+        baos.write(text.text.getBytes(StandardCharsets.ISO_8859_1));
 
         writeChunk(os, ChunkType.tEXt, baos.toByteArray());
     }
@@ -207,24 +198,19 @@ class PngWriter {
             return baos.toByteArray();
         }
     }
-    
+
     private boolean isValidISO_8859_1(final String s) {
-        try {
-            final String roundtrip = new String(s.getBytes("ISO-8859-1"), "ISO-8859-1");
-            return s.equals(roundtrip);
-        } catch (final UnsupportedEncodingException e) {
-            // should never be thrown.
-            throw new RuntimeException("Error parsing string.", e);
-        }
+        final String roundtrip = new String(s.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.ISO_8859_1);
+        return s.equals(roundtrip);
     }
-    
+
     private void writeChunkXmpiTXt(final OutputStream os, final String xmpXml)
             throws IOException {
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // keyword
-        baos.write(PngConstants.XMP_KEYWORD.getBytes("ISO-8859-1"));
+        baos.write(PngConstants.XMP_KEYWORD.getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
         baos.write(1); // compressed flag, true
@@ -233,10 +219,10 @@ class PngWriter {
         baos.write(0); // language tag (ignore). TODO
 
         // translated keyword
-        baos.write(PngConstants.XMP_KEYWORD.getBytes("utf-8"));
+        baos.write(PngConstants.XMP_KEYWORD.getBytes(StandardCharsets.UTF_8));
         baos.write(0);
 
-        baos.write(deflate(xmpXml.getBytes("utf-8")));
+        baos.write(deflate(xmpXml.getBytes(StandardCharsets.UTF_8)));
 
         writeChunk(os, ChunkType.iTXt, baos.toByteArray());
     }
@@ -261,11 +247,11 @@ class PngWriter {
 
     private void writeChunkTRNS(final OutputStream os, final Palette palette) throws IOException {
         final byte[] bytes = new byte[palette.length()];
-        
+
         for (int i = 0; i < bytes.length; i++) {
             bytes[i] = (byte) (0xff & (palette.getEntry(i) >> 24));
         }
-        
+
         writeChunk(os, ChunkType.tRNS, bytes);
     }
 
@@ -301,10 +287,10 @@ class PngWriter {
         baos.write(units);
 
         // units per pixel, x-axis
-        baos.write(String.valueOf(xUPP).getBytes("ISO-8859-1"));
+        baos.write(String.valueOf(xUPP).getBytes(StandardCharsets.ISO_8859_1));
         baos.write(0);
 
-        baos.write(String.valueOf(yUPP).getBytes("ISO-8859-1"));
+        baos.write(String.valueOf(yUPP).getBytes(StandardCharsets.ISO_8859_1));
 
         writeChunk(os, ChunkType.sCAL, baos.toByteArray());
     }
@@ -320,39 +306,6 @@ class PngWriter {
         return pngColorType.isBitDepthAllowed(depth) ? depth : 8;
     }
 
-    /// Wraps a palette by adding a single transparent entry at index 0.
-    private static class TransparentPalette implements Palette {
-        private final Palette palette;
-        
-        TransparentPalette(final Palette palette) {
-            this.palette = palette;
-        }
-        
-        @Override
-        public int getEntry(final int index) {
-            if (index == 0) {
-                return 0x00000000;
-            }
-            return palette.getEntry(index - 1);
-        }
-        
-        @Override
-        public int length() {
-            return 1 + palette.length();
-        }
-        
-        @Override
-        public int getPaletteIndex(final int rgb) throws ImageWriteException {
-            if (rgb == 0x00000000) {
-                return 0;
-            }
-            final int index = palette.getPaletteIndex(rgb);
-            if (index >= 0) {
-                return 1 + index;
-            }
-            return index;
-        }
-    }
     /*
      between two chunk types indicates alternatives.
      Table 5.3 - Chunk ordering rules
@@ -391,11 +344,8 @@ class PngWriter {
         if (params.containsKey(ImagingConstants.PARAM_KEY_FORMAT)) {
             params.remove(ImagingConstants.PARAM_KEY_FORMAT);
         }
-        // clear verbose key.
-        if (params.containsKey(ImagingConstants.PARAM_KEY_VERBOSE)) {
-            params.remove(ImagingConstants.PARAM_KEY_VERBOSE);
-        }
 
+        int compressionLevel = Deflater.DEFAULT_COMPRESSION;
         final Map<String, Object> rawParams = new HashMap<>(params);
         if (params.containsKey(PngConstants.PARAM_KEY_PNG_FORCE_TRUE_COLOR)) {
             params.remove(PngConstants.PARAM_KEY_PNG_FORCE_TRUE_COLOR);
@@ -412,8 +362,12 @@ class PngWriter {
         if (params.containsKey(PngConstants.PARAM_KEY_PNG_TEXT_CHUNKS)) {
             params.remove(PngConstants.PARAM_KEY_PNG_TEXT_CHUNKS);
         }
+        if (params.containsKey(PngConstants.PARAM_KEY_PNG_COMPRESSION_LEVEL)) {
+            compressionLevel = (int) params.remove(PngConstants.PARAM_KEY_PNG_COMPRESSION_LEVEL);
+        }
         params.remove(ImagingConstants.PARAM_KEY_PIXEL_DENSITY);
         params.remove(PngConstants.PARAM_KEY_PHYSICAL_SCALE);
+        params.remove(PngConstants.PARAM_KEY_PNG_COMPRESSION_LEVEL);
         if (!params.isEmpty()) {
             final Object firstKey = params.keySet().iterator().next();
             throw new ImageWriteException("Unknown parameter: " + firstKey);
@@ -424,15 +378,11 @@ class PngWriter {
         final int height = src.getHeight();
 
         final boolean hasAlpha = new PaletteFactory().hasTransparency(src);
-        if (verbose) {
-            Debug.debug("hasAlpha: " + hasAlpha);
-        }
+        Debug.debug("hasAlpha: " + hasAlpha);
         // int transparency = new PaletteFactory().getTransparency(src);
 
         boolean isGrayscale = new PaletteFactory().isGrayscale(src);
-        if (verbose) {
-            Debug.debug("isGrayscale: " + isGrayscale);
-        }
+        Debug.debug("isGrayscale: " + isGrayscale);
 
         PngColorType pngColorType;
         {
@@ -450,15 +400,11 @@ class PngWriter {
             } else {
                 pngColorType = PngColorType.getColorType(hasAlpha, isGrayscale);
             }
-            if (verbose) {
-                Debug.debug("colorType: " + pngColorType);
-            }
+            Debug.debug("colorType: " + pngColorType);
         }
 
         final byte bitDepth = getBitDepth(pngColorType, params);
-        if (verbose) {
-            Debug.debug("bitDepth: " + bitDepth);
-        }
+        Debug.debug("bitDepth: " + bitDepth);
 
         int sampleDepth;
         if (pngColorType == PngColorType.INDEXED_COLOR) {
@@ -466,9 +412,7 @@ class PngWriter {
         } else {
             sampleDepth = bitDepth;
         }
-        if (verbose) {
-            Debug.debug("sampleDepth: " + sampleDepth);
-        }
+        Debug.debug("sampleDepth: " + sampleDepth);
 
         {
             PngConstants.PNG_SIGNATURE.writeTo(os);
@@ -497,20 +441,16 @@ class PngWriter {
         if (pngColorType == PngColorType.INDEXED_COLOR) {
             // PLTE No Before first IDAT
 
-            final int maxColors = hasAlpha ? 255 : 256;
+            final int maxColors = 256;
 
             final PaletteFactory paletteFactory = new PaletteFactory();
-            palette = paletteFactory.makeQuantizedRgbPalette(src, maxColors);
-            // Palette palette2 = new PaletteFactory().makePaletteSimple(src,
-            // maxColors);
-
-            // palette.dump();
 
             if (hasAlpha) {
-                palette = new TransparentPalette(palette);
-                writeChunkPLTE(os, palette);                
-                writeChunkTRNS(os, new SimplePalette(new int[] { 0x00000000 }));
+                palette = paletteFactory.makeQuantizedRgbaPalette(src, hasAlpha, maxColors);
+                writeChunkPLTE(os, palette);
+                writeChunkTRNS(os, palette);
             } else {
+                palette = paletteFactory.makeQuantizedRgbPalette(src, maxColors);
                 writeChunkPLTE(os, palette);
             }
         }
@@ -580,12 +520,8 @@ class PngWriter {
                         final int argb = row[x];
 
                         if (palette != null) {
-                            if (hasAlpha && (argb >>> 24) == 0x00) {
-                                baos.write(0);
-                            } else {
-                                final int index = palette.getPaletteIndex(argb);
-                                baos.write(0xff & index);
-                            }
+                            final int index = palette.getPaletteIndex(argb);
+                            baos.write(0xff & index);
                         } else {
                             final int alpha = 0xff & (argb >> 24);
                             final int red = 0xff & (argb >> 16);
@@ -624,8 +560,10 @@ class PngWriter {
             // Debug.debug("uncompressed", uncompressed.length);
 
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            final DeflaterOutputStream dos = new DeflaterOutputStream(baos);
             final int chunkSize = 256 * 1024;
+            Deflater deflater = new Deflater(compressionLevel);
+            final DeflaterOutputStream dos = new DeflaterOutputStream(baos,deflater,chunkSize);
+
             for (int index = 0; index < uncompressed.length; index += chunkSize) {
                 final int end = Math.min(uncompressed.length, index + chunkSize);
                 final int length = end - index;

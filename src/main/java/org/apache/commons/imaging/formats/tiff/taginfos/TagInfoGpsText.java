@@ -18,6 +18,7 @@ package org.apache.commons.imaging.formats.tiff.taginfos;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
@@ -25,13 +26,13 @@ import org.apache.commons.imaging.common.BinaryFunctions;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.constants.TiffDirectoryType;
 import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldType;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
 /**
  * Used by some GPS tags and the EXIF user comment tag,
  * this badly documented value is meant to contain
  * the text encoding in the first 8 bytes followed by
- * the non-null-terminated text in an unknown byte order.  
+ * the non-null-terminated text in an unknown byte order.
  */
 public final class TagInfoGpsText extends TagInfo {
     private static final TagInfoGpsText.TextEncoding TEXT_ENCODING_ASCII = new TextEncoding(
@@ -72,7 +73,7 @@ public final class TagInfoGpsText extends TagInfo {
         final byte[] prefix;
         public final String encodingName;
 
-        public TextEncoding(final byte[] prefix, final String encodingName) {
+        TextEncoding(final byte[] prefix, final String encodingName) {
             this.prefix = prefix;
             this.encodingName = encodingName;
         }
@@ -147,12 +148,8 @@ public final class TagInfoGpsText extends TagInfo {
 
         final byte[] bytes = entry.getByteArrayValue();
         if (bytes.length < 8) {
-            try {
-                // try ASCII, with NO prefix.
-                return new String(bytes, "US-ASCII");
-            } catch (final UnsupportedEncodingException e) {
-                throw new ImageReadException("GPS text field missing encoding prefix.", e);
-            }
+            // try ASCII, with NO prefix.
+            return new String(bytes, StandardCharsets.US_ASCII);
         }
 
         for (final TextEncoding encoding : TEXT_ENCODINGS) {
@@ -176,12 +173,7 @@ public final class TagInfoGpsText extends TagInfo {
             }
         }
 
-        try {
-            // try ASCII, with NO prefix.
-            return new String(bytes, "US-ASCII");
-        } catch (final UnsupportedEncodingException e) {
-            throw new ImageReadException("Unknown GPS text encoding prefix.", e);
-        }
-
+        // try ASCII, with NO prefix.
+        return new String(bytes, StandardCharsets.US_ASCII);
     }
 }

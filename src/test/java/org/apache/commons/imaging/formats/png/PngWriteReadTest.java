@@ -17,15 +17,17 @@
 
 package org.apache.commons.imaging.formats.png;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -34,8 +36,10 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingTest;
+import org.apache.commons.imaging.common.GenericImageMetadata;
+import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PngWriteReadTest extends ImagingTest {
     // public PngWriteReadTest(String name)
@@ -99,6 +103,13 @@ public class PngWriteReadTest extends ImagingTest {
     }
 
     @Test
+    public void test_withMultipletEXt() throws Exception {
+        final int[][] smallBlackPixels = getSimpleRawData(256, 256, 0);
+
+        writeAndReadMultipletEXt(smallBlackPixels);
+    }
+
+    @Test
     public void testTransparency() throws Exception {
         // Test for https://issues.apache.org/jira/browse/SANSELAN-52
         final int[][] smallAscendingPixels = getAscendingRawData(256, 256);
@@ -119,9 +130,9 @@ public class PngWriteReadTest extends ImagingTest {
               ImageFormats.PNG, optionalParams);
         final PngImageInfo imageInfo = (PngImageInfo) Imaging.getImageInfo(pngBytes);
         final PhysicalScale physicalScale = imageInfo.getPhysicalScale();
-        assertTrue("Invalid units", physicalScale.isInMeters());
-        assertEquals("Invalid horizontal units", 0.01, physicalScale.getHorizontalUnitsPerPixel(), 0.001);
-        assertEquals("Invalid vertical units", 0.02, physicalScale.getVerticalUnitsPerPixel(), 0.001);
+        assertTrue(physicalScale.isInMeters());
+        assertEquals(0.01, physicalScale.getHorizontalUnitsPerPixel(), 0.001);
+        assertEquals(0.02, physicalScale.getVerticalUnitsPerPixel(), 0.001);
     }
 
     @Test
@@ -135,9 +146,9 @@ public class PngWriteReadTest extends ImagingTest {
               ImageFormats.PNG, optionalParams);
         final PngImageInfo imageInfo = (PngImageInfo) Imaging.getImageInfo(pngBytes);
         final PhysicalScale physicalScale = imageInfo.getPhysicalScale();
-        assertTrue("Invalid units", physicalScale.isInRadians());
-        assertEquals("Invalid horizontal units", 0.01, physicalScale.getHorizontalUnitsPerPixel(), 0.001);
-        assertEquals("Invalid vertical units", 0.02, physicalScale.getVerticalUnitsPerPixel(), 0.001);
+        assertTrue(physicalScale.isInRadians());
+        assertEquals(0.01, physicalScale.getHorizontalUnitsPerPixel(), 0.001);
+        assertEquals(0.02, physicalScale.getVerticalUnitsPerPixel(), 0.001);
     }
 
     private BufferedImage imageDataToBufferedImage(final int[][] rawData) {
@@ -181,7 +192,7 @@ public class PngWriteReadTest extends ImagingTest {
 
         // Debug.debug("bytes", bytes);
 
-        final File tempFile = createTempFile("temp", ".png");
+        final File tempFile = File.createTempFile("temp", ".png");
         FileUtils.writeByteArrayToFile(tempFile, bytes);
 
         final BufferedImage dstImage = Imaging.getBufferedImage(bytes);
@@ -194,4 +205,43 @@ public class PngWriteReadTest extends ImagingTest {
         assertArrayEquals(rawData, dstData);
     }
 
+    private void writeAndReadMultipletEXt(final int[][] rawData) throws IOException,
+       ImageReadException, ImageWriteException {
+        final BufferedImage srcImage = imageDataToBufferedImage(rawData);
+
+        final List<PngText.Text> textChunks = new LinkedList<>();
+        textChunks.add(new PngText.Text("a", "b"));
+        textChunks.add(new PngText.Text("c", "d"));
+        final Map<String, Object> writeParams = new HashMap<>();
+        writeParams.put(PngConstants.PARAM_KEY_PNG_TEXT_CHUNKS,
+           textChunks);
+
+        final byte[] bytes = Imaging.writeImageToBytes(srcImage,
+           ImageFormats.PNG, writeParams);
+
+        // Debug.debug("bytes", bytes);
+
+        final File tempFile = File.createTempFile("temp", ".png");
+        FileUtils.writeByteArrayToFile(tempFile, bytes);
+
+        final BufferedImage dstImage = Imaging.getBufferedImage(bytes);
+
+        assertNotNull(dstImage);
+        assertTrue(srcImage.getWidth() == dstImage.getWidth());
+        assertTrue(srcImage.getHeight() == dstImage.getHeight());
+
+        final int dstData[][] = bufferedImageToImageData(dstImage);
+        assertArrayEquals(rawData, dstData);
+
+        final ImageMetadata imageMetadata = Imaging.getMetadata(bytes);
+        assertEquals(imageMetadata.getItems().size(), 2);
+        final GenericImageMetadata.GenericImageMetadataItem item0
+           = (GenericImageMetadata.GenericImageMetadataItem)imageMetadata.getItems().get(0);
+        assertEquals(item0.getKeyword(), "a");
+        assertEquals(item0.getText(), "b");
+        final GenericImageMetadata.GenericImageMetadataItem item1
+           = (GenericImageMetadata.GenericImageMetadataItem)imageMetadata.getItems().get(1);
+        assertEquals(item1.getKeyword(), "c");
+        assertEquals(item1.getText(), "d");
+    }
 }

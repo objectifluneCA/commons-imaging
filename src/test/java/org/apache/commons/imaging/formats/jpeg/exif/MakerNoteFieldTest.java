@@ -24,13 +24,9 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
 public class MakerNoteFieldTest extends SpecificExifTagTest {
-
-    public MakerNoteFieldTest(final File imageFile) {
-        super(imageFile);
-    }
 
     @Override
     protected void checkField(final File imageFile, final TiffField field)

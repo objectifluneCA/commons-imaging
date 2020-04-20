@@ -34,7 +34,7 @@ import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageData;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
-import org.apache.commons.imaging.util.Debug;
+import org.apache.commons.imaging.internal.Debug;
 
 public class JpegImageMetadata implements ImageMetadata {
     private final JpegPhotoshopMetadata photoshop;
@@ -73,10 +73,10 @@ public class JpegImageMetadata implements ImageMetadata {
 
     /**
      * Returns the size of the first JPEG thumbnail found in the EXIF metadata.
-     * 
+     *
      * @return Thumbnail width and height or null if no thumbnail.
-     * @throws ImageReadException
-     * @throws IOException
+     * @throws ImageReadException if it fails to read the image
+     * @throws IOException if it fails to read the image size
      */
     public Dimension getEXIFThumbnailSize() throws ImageReadException,
             IOException {
@@ -90,10 +90,10 @@ public class JpegImageMetadata implements ImageMetadata {
 
     /**
      * Returns the data of the first JPEG thumbnail found in the EXIF metadata.
-     * 
+     *
      * @return JPEG data or null if no thumbnail.
-     * @throws ImageReadException
-     * @throws IOException
+     * @throws ImageReadException if it fails to read the image
+     * @throws IOException if an IO error occurred
      */
     public byte[] getEXIFThumbnailData() throws ImageReadException, IOException {
         if (exif == null) {
@@ -105,11 +105,12 @@ public class JpegImageMetadata implements ImageMetadata {
 
             byte[] data = null;
             if (dir.getJpegImageData() != null) {
-                data = dir.getJpegImageData().getData(); // TODO clone?
+                data = dir.getJpegImageData().getData();
             }
             // Support other image formats here.
 
             if (data != null) {
+                // already cloned, safe to return this copy
                 return data;
             }
         }
@@ -118,11 +119,11 @@ public class JpegImageMetadata implements ImageMetadata {
 
     /**
      * Get the thumbnail image if available.
-     * 
-     * @return the thumbnail image. May be <code>null</code> if no image could
+     *
+     * @return the thumbnail image. May be {@code null} if no image could
      *         be found.
-     * @throws ImageReadException
-     * @throws IOException
+     * @throws ImageReadException if it fails to read the image
+     * @throws IOException if it fails to get the thumbnail or to read the image data
      */
     public BufferedImage getEXIFThumbnail() throws ImageReadException,
             IOException {

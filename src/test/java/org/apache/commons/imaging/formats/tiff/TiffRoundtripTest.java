@@ -17,7 +17,7 @@
 
 package org.apache.commons.imaging.formats.tiff;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -31,8 +31,8 @@ import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.TiffConstants;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Test;
 
 public class TiffRoundtripTest extends TiffBaseTest {
 
@@ -55,10 +55,11 @@ public class TiffRoundtripTest extends TiffBaseTest {
             final int[] compressions = new int[]{
                     TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED,
                     TiffConstants.TIFF_COMPRESSION_LZW,
-                    TiffConstants.TIFF_COMPRESSION_PACKBITS
+                    TiffConstants.TIFF_COMPRESSION_PACKBITS,
+                    TiffConstants.TIFF_COMPRESSION_DEFLATE_ADOBE
             };
             for (final int compression : compressions) {
-                final File tempFile = createTempFile(imageFile.getName() + "-" + compression + ".", ".tif");
+                final File tempFile = File.createTempFile(imageFile.getName() + "-" + compression + ".", ".tif");
                 final Map<String, Object> params = new HashMap<>();
                 params.put(ImagingConstants.PARAM_KEY_COMPRESSION, compression);
                 Imaging.writeImage(image, tempFile, ImageFormats.TIFF,

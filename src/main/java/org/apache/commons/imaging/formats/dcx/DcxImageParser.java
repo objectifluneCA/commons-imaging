@@ -47,7 +47,7 @@ import org.apache.commons.imaging.formats.pcx.PcxConstants;
 import org.apache.commons.imaging.formats.pcx.PcxImageParser;
 
 public class DcxImageParser extends ImageParser {
-    // See http://www.fileformat.info/format/pcx/egff.htm for documentation
+    // See http://www.fileformat.fine/format/pcx/egff.htm for documentation
     private static final String DEFAULT_EXTENSION = ".dcx";
     private static final String[] ACCEPTED_EXTENSIONS = { ".dcx", };
 
@@ -111,7 +111,7 @@ public class DcxImageParser extends ImageParser {
         public final int id;
         public final long[] pageTable;
 
-        public DcxHeader(final int id, final long[] pageTable) {
+        DcxHeader(final int id, final long[] pageTable) {
             this.id = id;
             this.pageTable = pageTable;
         }
@@ -197,7 +197,7 @@ public class DcxImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         final HashMap<String, Object> pcxParams = new HashMap<>();
 
@@ -210,7 +210,7 @@ public class DcxImageParser extends ImageParser {
             final Object value = params.remove(PcxConstants.PARAM_KEY_PCX_COMPRESSION);
             pcxParams.put(PcxConstants.PARAM_KEY_PCX_COMPRESSION, value);
         }
-        
+
         if (params.containsKey(PARAM_KEY_PIXEL_DENSITY)) {
             final Object value = params.remove(PARAM_KEY_PIXEL_DENSITY);
             if (value != null) {
@@ -240,21 +240,5 @@ public class DcxImageParser extends ImageParser {
         }
         final PcxImageParser pcxImageParser = new PcxImageParser();
         pcxImageParser.writeImage(src, bos, pcxParams);
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
     }
 }

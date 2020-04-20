@@ -200,7 +200,7 @@ public class BasicCParser {
                         throw new ImageReadException("Bad preprocessor directive");
                     }
                     if (!tokens[0].equals("define")) {
-                        throw new ImageReadException("Invalid/unsupported " 
+                        throw new ImageReadException("Invalid/unsupported "
                                 + "preprocessor directive '" + tokens[0] + "'");
                     }
                     defines.put(tokens[1], (tokens.length == 3) ? tokens[2]
@@ -319,7 +319,7 @@ public class BasicCParser {
                     i += 2;
                     int constant;
                     try {
-                        constant = Integer.parseInt(Character.toString(hex1) + Character.toString(hex2), 16);
+                        constant = Integer.parseInt(hex1 + Character.toString(hex2), 16);
                     } catch (final NumberFormatException nfe) {
                         throw new ImageReadException(
                                 "Parsing XPM file failed, "

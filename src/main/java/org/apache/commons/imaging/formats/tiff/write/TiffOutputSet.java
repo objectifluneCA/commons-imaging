@@ -16,6 +16,8 @@
  */
 package org.apache.commons.imaging.formats.tiff.write;
 
+import static org.apache.commons.imaging.formats.tiff.constants.TiffConstants.DEFAULT_TIFF_BYTE_ORDER;
+
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +27,7 @@ import org.apache.commons.imaging.common.RationalNumber;
 import org.apache.commons.imaging.formats.tiff.constants.GpsTagConstants;
 import org.apache.commons.imaging.formats.tiff.constants.TiffDirectoryConstants;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
-import org.apache.commons.imaging.util.Debug;
-
-import static org.apache.commons.imaging.formats.tiff.constants.TiffConstants.*;
+import org.apache.commons.imaging.internal.Debug;
 
 public final class TiffOutputSet {
     public final ByteOrder byteOrder;
@@ -127,12 +127,12 @@ public final class TiffOutputSet {
 
     /**
      * A convenience method to update GPS values in EXIF metadata.
-     * 
+     *
      * @param longitude
      *            Longitude in degrees E, negative values are W.
      * @param latitude
      *            latitude in degrees N, negative values are S.
-     * @throws ImageWriteException
+     * @throws ImageWriteException if it fails to write the new data to the GPS directory
      */
     public void setGPSInDegrees(double longitude, double latitude)
             throws ImageWriteException {
@@ -274,7 +274,7 @@ public final class TiffOutputSet {
             final List<TiffOutputField> fields = directory.getFields();
             for (final TiffOutputField field : fields) {
                 result.append(prefix);
-                result.append("\t\tfield " + i + ": " + field.tagInfo);
+                result.append("\t\tfield ").append(i).append(": ").append(field.tagInfo);
                 result.append(NEWLINE);
             }
         }

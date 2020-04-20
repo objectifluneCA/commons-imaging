@@ -18,18 +18,19 @@ package org.apache.commons.imaging.color;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ColorHslTest {
 
     private ColorHsl color;
     private ColorHsl colorCopy;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         color = new ColorHsl(1.0, 2.0, 3.0);
         colorCopy = new ColorHsl(1.0, 2.0, 3.0);
@@ -60,4 +61,16 @@ public class ColorHslTest {
         assertTrue(color.equals(colorCopy) && colorCopy.equals(color));
         assertThat(color.hashCode(), is(colorCopy.hashCode()));
     }
+
+    @Test
+    public void testCreatesColorHslOne() {
+        ColorHsl colorHsl = ColorHsl.BLUE;
+        ColorHsl colorHslTwo = new ColorHsl(100.0, 667.226, (-687.72287636));
+
+        assertEquals(667.226, colorHslTwo.S, 0.01);
+        assertEquals(100.0, colorHslTwo.H, 0.01);
+        assertEquals((-687.72287636), colorHslTwo.L, 0.01);
+        assertFalse(colorHsl.equals(colorHslTwo));
+    }
+
 }

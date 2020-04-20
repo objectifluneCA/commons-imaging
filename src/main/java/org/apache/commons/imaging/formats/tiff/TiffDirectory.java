@@ -73,17 +73,13 @@ public class TiffDirectory extends TiffElement {
         this.entries = Collections.unmodifiableList(entries);
         this.nextDirectoryOffset = nextDirectoryOffset;
     }
-    
+
     public String description() {
         return TiffDirectory.description(type);
     }
 
     @Override
-    public String getElementDescription(final boolean verbose) {
-        if (!verbose) {
-            return "TIFF Directory (" + description() + ")";
-        }
-
+    public String getElementDescription() {
         long entryOffset = offset + TiffConstants.TIFF_DIRECTORY_HEADER_LENGTH;
 
         final StringBuilder result = new StringBuilder();
@@ -708,10 +704,7 @@ public class TiffDirectory extends TiffElement {
         }
 
         @Override
-        public String getElementDescription(final boolean verbose) {
-            if (verbose) {
-                return null;
-            }
+        public String getElementDescription() {
             return "ImageDataElement";
         }
     }
@@ -727,7 +720,7 @@ public class TiffDirectory extends TiffElement {
                     + ") != byteCounts.length(" + byteCounts.length + ")");
         }
 
-        final List<ImageDataElement> result = new ArrayList<>();
+        final List<ImageDataElement> result = new ArrayList<>(offsets.length);
         for (int i = 0; i < offsets.length; i++) {
             result.add(new ImageDataElement(offsets[i], byteCounts[i]));
         }

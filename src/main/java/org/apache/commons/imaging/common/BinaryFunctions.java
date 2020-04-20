@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
+import java.util.logging.Logger;
 
 import org.apache.commons.imaging.ImageReadException;
 
@@ -30,9 +31,12 @@ import org.apache.commons.imaging.ImageReadException;
  * Convenience methods for various binary and I/O operations.
  */
 public final class BinaryFunctions {
+
+    private static final Logger LOGGER = Logger.getLogger(BinaryFunctions.class.getName());
+
     private BinaryFunctions() {
     }
-    
+
     public static boolean startsWith(final byte[] haystack, final byte[] needle) {
         if (needle == null) {
             return false;
@@ -233,19 +237,19 @@ public final class BinaryFunctions {
         if ((byte0 | byte1) < 0) {
             throw new IOException(exception);
         }
-        
+
         final int result;
         if (byteOrder == ByteOrder.BIG_ENDIAN) {
             result = (byte0 << 8) | byte1;
         } else {
             result = (byte1 << 8) | byte0;
         }
-        
+
         return result;
     }
 
     public static void printCharQuad(final String msg, final int i) {
-        System.out.println(msg + ": '" + (char) (0xff & (i >> 24))
+        LOGGER.finest(msg + ": '" + (char) (0xff & (i >> 24))
                 + (char) (0xff & (i >> 16)) + (char) (0xff & (i >> 8))
                 + (char) (0xff & (i >> 0)) + "'");
 
@@ -259,11 +263,53 @@ public final class BinaryFunctions {
     }
 
     public static void printByteBits(final String msg, final byte i) {
-        System.out.println(msg + ": '" + Integer.toBinaryString(0xff & i));
+        LOGGER.finest(msg + ": '" + Integer.toBinaryString(0xff & i));
     }
 
     public static int charsToQuad(final char c1, final char c2, final char c3, final char c4) {
         return (((0xff & c1) << 24) | ((0xff & c2) << 16) | ((0xff & c3) << 8) | ((0xff & c4) << 0));
+    }
+
+    /**
+     * Convert a quad into a byte array.
+     * @param quad quad
+     * @return a byte array
+     */
+    public static byte[] quadsToByteArray(int quad) {
+        byte[] arr = new byte[4];
+        arr[0] = (byte) (quad >> 24);
+        arr[1] = (byte) (quad >> 16);
+        arr[2] = (byte) (quad >> 8);
+        arr[3] = (byte) quad;
+        return arr;
+    }
+
+    /**
+     * Consumes the {@code InputStream} (without closing it) searching for a quad. It will
+     * stop either when the quad is found, or when there are no more bytes in the input stream.
+     *
+     * <p>Returns {@code true} if it found the quad, and {@code false} otherwise.
+     *
+     * @param quad a quad (the needle)
+     * @param bis an input stream (the haystack)
+     * @return {@code true} if it found the quad, and {@code false} otherwise
+     * @throws IOException
+     */
+    public static boolean searchQuad(int quad, InputStream bis) throws IOException {
+        byte[] needle = BinaryFunctions.quadsToByteArray(quad);
+        int b = -1;
+        int position = 0;
+        while ((b = bis.read()) != -1) {
+            if (needle[position] == b) {
+                position++;
+                if (position == needle.length) {
+                    return true;
+                }
+            } else {
+                position = 0;
+            }
+        }
+        return false;
     }
 
     public static int findNull(final byte[] src) {

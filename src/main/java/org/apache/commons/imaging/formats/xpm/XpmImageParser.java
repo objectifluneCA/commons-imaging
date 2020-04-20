@@ -2,17 +2,15 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *  under the License.
  */
-
 package org.apache.commons.imaging.formats.xpm;
 
 import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_FORMAT;
@@ -33,6 +31,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,7 +71,7 @@ public class XpmImageParser extends ImageParser {
             if (colorNames != null) {
                 return;
             }
-    
+
             try {
                 final InputStream rgbTxtStream =
                         XpmImageParser.class.getResourceAsStream("rgb.txt");
@@ -80,7 +79,7 @@ public class XpmImageParser extends ImageParser {
                     throw new ImageReadException("Couldn't find rgb.txt in our resources");
                 }
                 final Map<String, Integer> colors = new HashMap<>();
-                try (InputStreamReader isReader = new InputStreamReader(rgbTxtStream, "US-ASCII");
+                try (InputStreamReader isReader = new InputStreamReader(rgbTxtStream, StandardCharsets.US_ASCII);
                         BufferedReader reader = new BufferedReader(isReader)) {
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -182,7 +181,7 @@ public class XpmImageParser extends ImageParser {
 
         Map<Object, PaletteEntry> palette = new HashMap<>();
 
-        public XpmHeader(final int width, final int height, final int numColors,
+        XpmHeader(final int width, final int height, final int numColors,
                 final int numCharsPerPixel, final int xHotSpot, final int yHotSpot, final boolean xpmExt) {
             this.width = width;
             this.height = height;
@@ -361,7 +360,7 @@ public class XpmImageParser extends ImageParser {
             return 0x00000000;
         }
     }
-    
+
     private void populatePaletteEntry(final PaletteEntry paletteEntry, final String key, final String color) throws ImageReadException {
         if ("m".equals(key)) {
             paletteEntry.monoArgb = parseColor(color);
@@ -399,11 +398,11 @@ public class XpmImageParser extends ImageParser {
             for (int j = 0; j < tokens.length; j++) {
                 final String token = tokens[j];
                 boolean isKey = false;
-                if (previousKeyIndex < (j - 1) 
+                if (previousKeyIndex < (j - 1)
                         && "m".equals(token)
-                        || "g4".equals(token) 
+                        || "g4".equals(token)
                         || "g".equals(token)
-                        || "c".equals(token) 
+                        || "c".equals(token)
                         || "s".equals(token)) {
                     isKey = true;
                 }
@@ -643,7 +642,7 @@ public class XpmImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
@@ -666,6 +665,18 @@ public class XpmImageParser extends ImageParser {
         while (palette == null) {
             palette = paletteFactory.makeExactRgbPaletteSimple(src,
                     hasTransparency ? maxColors - 1 : maxColors);
+
+            // leave the loop if numbers would go beyond Integer.MAX_VALUE to avoid infinite loops
+            // test every operation from below if it would increase an int value beyond Integer.MAX_VALUE
+            long nextMaxColors = maxColors * WRITE_PALETTE.length;
+            long nextCharsPerPixel = charsPerPixel + 1;
+            if (nextMaxColors > Integer.MAX_VALUE) {
+                throw new ImageWriteException("Xpm: Can't write images with more than Integer.MAX_VALUE colors.");
+            }
+            if (nextCharsPerPixel > Integer.MAX_VALUE) {
+                throw new ImageWriteException("Xpm: Can't write images with more than Integer.MAX_VALUE chars per pixel.");
+            }
+            // the code above makes sure that we never go beyond Integer.MAX_VALUE here
             if (palette == null) {
                 maxColors *= WRITE_PALETTE.length;
                 charsPerPixel++;
@@ -677,12 +688,12 @@ public class XpmImageParser extends ImageParser {
         }
 
         String line = "/* XPM */\n";
-        os.write(line.getBytes("US-ASCII"));
+        os.write(line.getBytes(StandardCharsets.US_ASCII));
         line = "static char *" + randomName() + "[] = {\n";
-        os.write(line.getBytes("US-ASCII"));
+        os.write(line.getBytes(StandardCharsets.US_ASCII));
         line = "\"" + src.getWidth() + " " + src.getHeight() + " " + colors
                 + " " + charsPerPixel + "\",\n";
-        os.write(line.getBytes("US-ASCII"));
+        os.write(line.getBytes(StandardCharsets.US_ASCII));
 
         for (int i = 0; i < colors; i++) {
             String color;
@@ -693,15 +704,15 @@ public class XpmImageParser extends ImageParser {
             }
             line = "\"" + pixelsForIndex(i, charsPerPixel) + " c " + color
                     + "\",\n";
-            os.write(line.getBytes("US-ASCII"));
+            os.write(line.getBytes(StandardCharsets.US_ASCII));
         }
 
         String separator = "";
         for (int y = 0; y < src.getHeight(); y++) {
-            os.write(separator.getBytes("US-ASCII"));
+            os.write(separator.getBytes(StandardCharsets.US_ASCII));
             separator = ",\n";
             line = "\"";
-            os.write(line.getBytes("US-ASCII"));
+            os.write(line.getBytes(StandardCharsets.US_ASCII));
             for (int x = 0; x < src.getWidth(); x++) {
                 final int argb = src.getRGB(x, y);
                 if ((argb & 0xff000000) == 0) {
@@ -711,29 +722,13 @@ public class XpmImageParser extends ImageParser {
                             palette.getPaletteIndex(0xffffff & argb),
                             charsPerPixel);
                 }
-                os.write(line.getBytes("US-ASCII"));
+                os.write(line.getBytes(StandardCharsets.US_ASCII));
             }
             line = "\"";
-            os.write(line.getBytes("US-ASCII"));
+            os.write(line.getBytes(StandardCharsets.US_ASCII));
         }
 
         line = "\n};\n";
-        os.write(line.getBytes("US-ASCII"));
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
+        os.write(line.getBytes(StandardCharsets.US_ASCII));
     }
 }

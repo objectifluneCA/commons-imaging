@@ -17,8 +17,8 @@
 
 package org.apache.commons.imaging.formats.tiff;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -31,8 +31,8 @@ import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.common.itu_t4.T4AndT6Compression;
 import org.apache.commons.imaging.formats.tiff.constants.TiffConstants;
-import org.apache.commons.imaging.util.Debug;
-import org.junit.Test;
+import org.apache.commons.imaging.internal.Debug;
+import org.junit.jupiter.api.Test;
 
 public class TiffCcittTest extends TiffBaseTest {
 
@@ -301,7 +301,7 @@ public class TiffCcittTest extends TiffBaseTest {
      * Generates the next combination of elements in the sequence array, with
      * each element having a maximum value of max. Initially, the sequence
      * should be set to minimum values of each element.
-     * 
+     *
      * @param sequence
      *            the array of elements to update
      * @param max

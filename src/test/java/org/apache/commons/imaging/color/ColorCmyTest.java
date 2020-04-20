@@ -18,18 +18,19 @@ package org.apache.commons.imaging.color;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ColorCmyTest {
 
     private ColorCmy color;
     private ColorCmy colorCopy;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         color = new ColorCmy(1.0, 2.0, 3.0);
         colorCopy = new ColorCmy(1.0, 2.0, 3.0);
@@ -56,8 +57,19 @@ public class ColorCmyTest {
     }
 
     @Test
-    public void testHashCodeAndEquals() throws Exception {
+    public void testCreatesColorCmy() {
+        ColorCmy colorCmy = new ColorCmy(0.0, (-1668.733868772), (-1568.733868772));
+        ColorCmy colorCmyTwo = ColorCmy.YELLOW;
+
+        assertFalse(colorCmy.equals(colorCmyTwo));
+        assertEquals((-1568.733868772), colorCmy.Y, 0.01);
+        assertEquals((-1668.733868772), colorCmy.M, 0.01);
+    }
+
+    @Test
+    public void testEquals() {
         assertTrue(color.equals(colorCopy) && colorCopy.equals(color));
         assertThat(color.hashCode(), is(colorCopy.hashCode()));
     }
+
 }

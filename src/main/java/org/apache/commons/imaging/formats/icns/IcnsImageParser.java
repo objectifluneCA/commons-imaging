@@ -17,7 +17,6 @@
 package org.apache.commons.imaging.formats.icns;
 
 import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_FORMAT;
-import static org.apache.commons.imaging.ImagingConstants.PARAM_KEY_VERBOSE;
 import static org.apache.commons.imaging.common.BinaryFunctions.read4Bytes;
 import static org.apache.commons.imaging.common.BinaryFunctions.readBytes;
 
@@ -83,11 +82,7 @@ public class IcnsImageParser extends ImageParser {
     public ImageInfo getImageInfo(final ByteSource byteSource, Map<String, Object> params)
             throws ImageReadException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = params == null ? new HashMap<String, Object>() : new HashMap<>(params);
-
-        if (params.containsKey(PARAM_KEY_VERBOSE)) {
-            params.remove(PARAM_KEY_VERBOSE);
-        }
+        params = params == null ? new HashMap<>() : new HashMap<>(params);
 
         if (!params.isEmpty()) {
             final Object firstKey = params.keySet().iterator().next();
@@ -112,11 +107,7 @@ public class IcnsImageParser extends ImageParser {
     public Dimension getImageSize(final ByteSource byteSource, Map<String, Object> params)
             throws ImageReadException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
-
-        if (params.containsKey(PARAM_KEY_VERBOSE)) {
-            params.remove(PARAM_KEY_VERBOSE);
-        }
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         if (!params.isEmpty()) {
             final Object firstKey = params.keySet().iterator().next();
@@ -142,7 +133,7 @@ public class IcnsImageParser extends ImageParser {
         public final int magic; // Magic literal (4 bytes), always "icns"
         public final int fileSize; // Length of file (4 bytes), in bytes.
 
-        public IcnsHeader(final int magic, final int fileSize) {
+        IcnsHeader(final int magic, final int fileSize) {
             this.magic = magic;
             this.fileSize = fileSize;
         }
@@ -173,7 +164,7 @@ public class IcnsImageParser extends ImageParser {
         public final int elementSize;
         public final byte[] data;
 
-        public IcnsElement(final int type, final int elementSize, final byte[] data) {
+        IcnsElement(final int type, final int elementSize, final byte[] data) {
             this.type = type;
             this.elementSize = elementSize;
             this.data = data;
@@ -195,21 +186,16 @@ public class IcnsImageParser extends ImageParser {
         }
     }
 
-    private IcnsElement readIcnsElement(final InputStream is) throws IOException {
-        final int type = read4Bytes("Type", is, "Not a Valid ICNS File", getByteOrder()); // Icon type
-                                                                    // (4 bytes)
-        final int elementSize = read4Bytes("ElementSize", is, "Not a Valid ICNS File", getByteOrder()); // Length
-                                                                                  // of
-                                                                                  // data
-                                                                                  // (4
-                                                                                  // bytes),
-                                                                                  // in
-                                                                                  // bytes,
-                                                                                  // including
-                                                                                  // this
-                                                                                  // header
-        final byte[] data = readBytes("Data", is, elementSize - 8,
-                "Not a Valid ICNS File");
+    private IcnsElement readIcnsElement(final InputStream is, final int remainingSize) throws IOException {
+        // Icon type (4 bytes)
+        final int type = read4Bytes("Type", is, "Not a valid ICNS file", getByteOrder());
+        // Length of data (4 bytes), in bytes, including this header
+        final int elementSize = read4Bytes("ElementSize", is, "Not a valid ICNS file", getByteOrder());
+        if (elementSize > remainingSize) {
+            throw new IOException(String.format("Corrupted ICNS file: element size %d is greater than "
+                    + "remaining size %d", elementSize, remainingSize));
+        }
+        final byte[] data = readBytes("Data", is, elementSize - 8, "Not a valid ICNS file");
 
         return new IcnsElement(type, elementSize, data);
     }
@@ -218,7 +204,7 @@ public class IcnsImageParser extends ImageParser {
         public final IcnsHeader icnsHeader;
         public final IcnsElement[] icnsElements;
 
-        public IcnsContents(final IcnsHeader icnsHeader, final IcnsElement[] icnsElements) {
+        IcnsContents(final IcnsHeader icnsHeader, final IcnsElement[] icnsElements) {
             super();
             this.icnsHeader = icnsHeader;
             this.icnsElements = icnsElements;
@@ -232,7 +218,7 @@ public class IcnsImageParser extends ImageParser {
 
             final List<IcnsElement> icnsElementList = new ArrayList<>();
             for (int remainingSize = icnsHeader.fileSize - 8; remainingSize > 0;) {
-                final IcnsElement icnsElement = readIcnsElement(is);
+                final IcnsElement icnsElement = readIcnsElement(is, remainingSize);
                 icnsElementList.add(icnsElement);
                 remainingSize -= icnsElement.elementSize;
             }
@@ -280,7 +266,7 @@ public class IcnsImageParser extends ImageParser {
     public void writeImage(final BufferedImage src, final OutputStream os, Map<String, Object> params)
             throws ImageWriteException, IOException {
         // make copy of params; we'll clear keys as we consume them.
-        params = (params == null) ? new HashMap<String, Object>() : new HashMap<>(params);
+        params = (params == null) ? new HashMap<>() : new HashMap<>(params);
 
         // clear format key.
         if (params.containsKey(PARAM_KEY_FORMAT)) {
@@ -336,21 +322,5 @@ public class IcnsImageParser extends ImageParser {
                 }
             }
         }
-    }
-
-    /**
-     * Extracts embedded XML metadata as XML string.
-     * <p>
-     * 
-     * @param byteSource
-     *            File containing image data.
-     * @param params
-     *            Map of optional parameters, defined in ImagingConstants.
-     * @return Xmp Xml as String, if present. Otherwise, returns null.
-     */
-    @Override
-    public String getXmpXml(final ByteSource byteSource, final Map<String, Object> params)
-            throws ImageReadException, IOException {
-        return null;
     }
 }

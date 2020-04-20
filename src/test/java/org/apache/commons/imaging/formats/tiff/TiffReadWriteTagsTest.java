@@ -16,7 +16,7 @@
  */
 package org.apache.commons.imaging.formats.tiff;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,7 +35,7 @@ import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
 import org.apache.commons.imaging.formats.tiff.write.TiffImageWriterLossy;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TiffReadWriteTagsTest extends TiffBaseTest {
 
@@ -50,7 +50,7 @@ public class TiffReadWriteTagsTest extends TiffBaseTest {
         final String area = "A good area";
         final float widthRes = 2.2f;
         final double geoDoubleParams = -8.4;
-        
+
         final TiffOutputSet set = new TiffOutputSet();
         final TiffOutputDirectory dir = set.getOrCreateRootDirectory();
         dir.add(TiffTagConstants.TIFF_TAG_IMAGE_DESCRIPTION, description);
@@ -58,15 +58,15 @@ public class TiffReadWriteTagsTest extends TiffBaseTest {
         dir.add(TiffTagConstants.TIFF_TAG_YRESOLUTION, twoThirds);
         dir.add(TiffTagConstants.TIFF_TAG_T4_OPTIONS, t4Options);
         dir.add(TiffTagConstants.TIFF_TAG_IMAGE_WIDTH, width);
-        dir.add(TiffTagConstants.TIFF_TAG_IMAGE_LENGTH, new short[]{height});
+        dir.add(TiffTagConstants.TIFF_TAG_IMAGE_LENGTH, height);
         dir.add(GpsTagConstants.GPS_TAG_GPS_AREA_INFORMATION, area);
         dir.add(MicrosoftHdPhotoTagConstants.EXIF_TAG_WIDTH_RESOLUTION, widthRes);
         dir.add(GeoTiffTagConstants.EXIF_TAG_GEO_DOUBLE_PARAMS_TAG, geoDoubleParams);
-        
+
         final TiffImageWriterLossy writer = new TiffImageWriterLossy();
         final ByteArrayOutputStream tiff = new ByteArrayOutputStream();
         writer.write(tiff, set);
-        
+
         final TiffReader reader = new TiffReader(true);
         final Map<String, Object> params = new TreeMap<>();
         final FormatCompliance formatCompliance = new FormatCompliance("");
